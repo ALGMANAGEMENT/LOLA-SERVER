@@ -1,0 +1,6 @@
+@LOLA_SERVER.API_HostAddress = http://localhost:5181
+
+GET {{LOLA_SERVER.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

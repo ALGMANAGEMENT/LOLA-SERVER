@@ -1,0 +1,51 @@
+# Archivos generados por el entorno de desarrollo
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs
+
+# Archivos binarios y compilados
+bin/
+obj/
+*.dll
+*.exe
+*.log
+*.sql
+*.sqlite
+
+
+# Archivos generados por NuGet
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Archivos de publicación
+publish/
+
+
+
+# Archivos temporales
+tmp/
+temp/
+logs/
+
+
+# Archivos específicos de Firebase
+firebase-debug.log
+.firebaserc
+.firebase/
+.firestore/
+.firebasehosting/
+firebase.json
+storage.rules
+
+# Archivos de configuración del sistema operativo
+.DS_Store
+Thumbs.db
+/.vs/ProjectEvaluation
+/.vs/LOLA-SERVICE
