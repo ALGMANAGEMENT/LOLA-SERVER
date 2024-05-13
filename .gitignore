@@ -48,4 +48,4 @@ storage.rules
 .DS_Store
 Thumbs.db
 /.vs/ProjectEvaluation
-/.vs/LOLA-SERVICE
+/.vs/LOLA-SERVER
