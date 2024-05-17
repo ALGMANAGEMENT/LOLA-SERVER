@@ -1,5 +1,6 @@
 ﻿using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
+using LOLA_SERVER.API.Controllers.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
     [Authorize]
     [Route("api/v1/images")]
     [ApiController]
-    public class ImagesController : ControllerBase
+    public class ImagesController : BaseController
     {
 
         private readonly StorageClient _storageClient;
@@ -30,15 +31,15 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
         public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string folder = "")
         {
             if (string.IsNullOrEmpty(folder))
-                return BadRequest("Es necesario especificar una carpeta.");
+                return ApiResponseError("Es necesario especificar una carpeta.");
 
             // Validar las carpetas permitidas
             var allowedFolders = new[] { "pets", "users", "histories" };
             if (!allowedFolders.Contains(folder.ToLower()))
-                return BadRequest("La carpeta especificada no es válida.");
+                return ApiResponseError("La carpeta especificada no es válida.");
 
             if (file == null || file.Length == 0)
-                return BadRequest("No se ha proporcionado un archivo válido.");
+                return ApiResponseError("No se ha proporcionado un archivo válido.");
 
             try
             {
@@ -52,11 +53,11 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
                 var publicUrl = $"https://storage.googleapis.com/{_bucketName}/{storageObject.Name}";
 
-                return Ok(new { Url = publicUrl });
+                return ApiResponse(new { Url = publicUrl });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error interno al cargar la imagen: {ex.Message}");
+                return ApiResponseServerError($"Error interno al cargar la imagen: {ex.Message}");
             }
         }
     }
