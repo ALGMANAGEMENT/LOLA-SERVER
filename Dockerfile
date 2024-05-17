@@ -1,6 +1,11 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
+
+# Copiar los certificados SSL
+COPY /fullchain.pem /https/fullchain.pem
+COPY /privkey.pem /https/privkey.pem
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
