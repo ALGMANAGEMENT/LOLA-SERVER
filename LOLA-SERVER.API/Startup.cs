@@ -55,7 +55,6 @@ namespace LOLA_SERVER.API
             app.UseCors("AllowAll");
 
             app.UseAuthorization();
-            app.UseAuthentication();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -65,9 +64,7 @@ namespace LOLA_SERVER.API
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapControllers();
             });
 
         }

@@ -1,5 +1,6 @@
 ﻿using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
@@ -7,6 +8,7 @@ using System.Linq;
 
 namespace LOLA_SERVER.API.Controllers.Images.v1
 {
+    [Authorize]
     [Route("api/v1/images")]
     [ApiController]
     public class ImagesController : ControllerBase
