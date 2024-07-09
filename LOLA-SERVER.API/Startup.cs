@@ -1,140 +1,115 @@
 ﻿using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using LOLA_SERVER.API.Middlewares;
-using LOLA_SERVER.API.Services; // Asegúrate de incluir el namespace correcto
+using LOLA_SERVER.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using System.Collections.Generic;
-using Swashbuckle.AspNetCore.SwaggerGen;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Threading.Tasks;
 
-namespace LOLA_SERVER.API
+public class Startup
 {
-    public class Startup
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration configuration)
     {
-        public IConfiguration Configuration { get; }
-
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        private void ConfigureCors(IServiceCollection services)
-        {
-            services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAll", builder =>
-                {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
-                });
-            });
-        }
-
-        private void InitializeFirebase()
-        {
-            FirebaseApp.Create(new AppOptions
-            {
-                Credential = GoogleCredential.FromFile("Utils/Credentials/Firebase-Credentials.json")
-            });
-        }
-
-        private void ConfigureAuthentication(IServiceCollection services)
-        {
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = Configuration["Jwt:Authority"];
-                    options.Audience = Configuration["Jwt:Audience"];
-                    options.RequireHttpsMetadata = false;
-                });
-        }
-
-        private void RegisterServices(IServiceCollection services)
-        {
-            // Registrar el servicio personalizado
-            services.AddSingleton<FirebaseMessagingService>();
-        }
-
-        private void RegisterControllers(IServiceCollection services)
-        {
-            services.AddControllers();
-        }
-
-        private void ConfigureSwagger(IServiceCollection services)
-        {
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "LOLA API", Version = "v1" });
-
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    In = ParameterLocation.Header,
-                    Description = "Por favor ingrese el token JWT con el prefijo 'Bearer'",
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer"
-                });
-
-                c.OperationFilter<SwaggerSecurityRequirementsDocumentFilter>();
-            });
-        }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            ConfigureCors(services);
-            InitializeFirebase();
-            ConfigureAuthentication(services);
-            RegisterServices(services);
-            RegisterControllers(services);
-            ConfigureSwagger(services);
-        }
-
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-            app.UseRouting();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.UseCors("AllowAll");
-
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "LOLA_SERVER API V1");
-                c.RoutePrefix = "swagger";
-            });
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
+        Configuration = configuration;
     }
 
-    // Filtro para agregar el encabezado de seguridad a todas las operaciones de Swagger
-    public class SwaggerSecurityRequirementsDocumentFilter : IOperationFilter
+    private void ConfigureCors(IServiceCollection services)
     {
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        services.AddCors(options =>
         {
-            var securityRequirement = new OpenApiSecurityRequirement
+            options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            });
+        });
+    }
+
+    private void InitializeFirebase()
+    {
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = GoogleCredential.FromFile("Utils/Credentials/Firebase-Credentials.json")
+        });
+    }
+
+    private void ConfigureAuthentication(IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = "https://accounts.google.com";
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = "https://accounts.google.com",
+                    ValidateAudience = true,
+                    ValidAudiences = new[]
+                    {
+                    "315094815894-bdc0b9hfq477eapk624l57lq9jji1001.apps.googleusercontent.com",
+                    "315094815894-ga563q20tj5kafbgo8ith2ljhm9pm2kk.apps.googleusercontent.com"
+                    },
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero // Reduce la tolerancia predeterminada en el tiempo de expiración del token
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        logger.LogError("Authentication failed. Exception: {Exception}", context.Exception);
+                        logger.LogError("Token: {Token}", context.Request.Headers["Authorization"]);
+                        return Task.CompletedTask;
+                    },
+                    OnMessageReceived = context =>
+                    {
+                        var token = context.Request.Headers["Authorization"].ToString();
+                        if (string.IsNullOrEmpty(token) || !token.StartsWith("Bearer "))
+                        {
+                            context.NoResult();
+                            return Task.CompletedTask;
+                        }
+                        context.Token = token.Substring("Bearer ".Length).Trim();
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+    }
+
+
+    private void RegisterServices(IServiceCollection services)
+    {
+        services.AddSingleton<FirebaseMessagingService>();
+    }
+
+    private void RegisterControllers(IServiceCollection services)
+    {
+        services.AddControllers();
+    }
+
+    private void ConfigureSwagger(IServiceCollection services)
+    {
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "LOLA API", Version = "v1" });
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Por favor ingrese el token JWT",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
                     new OpenApiSecurityScheme
@@ -143,13 +118,64 @@ namespace LOLA_SERVER.API
                         {
                             Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
-                        }
+                        },
                     },
-                    new string[] { }
+                    new string[] {}
                 }
-            };
+            });
+        });
+    }
 
-            operation.Security = new List<OpenApiSecurityRequirement> { securityRequirement };
+    public void ConfigureServices(IServiceCollection services)
+    {
+        ConfigureCors(services);
+        InitializeFirebase();
+        ConfigureAuthentication(services);
+        RegisterServices(services);
+        RegisterControllers(services);
+        ConfigureSwagger(services);
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
+    {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
         }
+        else
+        {
+            app.UseExceptionHandler("/Home/Error");
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseCors("AllowAll");
+
+        app.Use(async (context, next) =>
+        {
+            await next.Invoke();
+
+            if (context.Response.StatusCode == 401)
+            {
+                logger.LogWarning("Unauthorized request: " + context.Request.Path);
+            }
+        });
+
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "LOLA_SERVER API V1");
+            c.RoutePrefix = "swagger";
+        });
+
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
     }
 }

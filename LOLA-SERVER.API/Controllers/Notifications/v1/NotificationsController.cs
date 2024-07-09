@@ -2,8 +2,9 @@
 using LOLA_SERVER.API.Models.Notifications;
 using LOLA_SERVER.API.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace LOLA_SERVER.API.Controllers.Notifications.v1
 {
@@ -19,6 +20,14 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             _firebaseMessagingService = firebaseMessagingService;
         }
 
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            return await Task.FromResult(ApiResponse("Notifications OK"));
+        }
+        [Authorize]
         [HttpPost("send")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -35,8 +44,25 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
                 return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
             }
         }
+        [Authorize]
+        [HttpPost("send-to-topic")]
+        public async Task<IActionResult> SendNotificationToTopic([FromBody] TopicNotificationRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Topic) || string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return ApiResponseError("Tópico, título y cuerpo de la notificación son requeridos.");
+
+            try
+            {
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, request.Topic);
+                return ApiResponse("Notificación enviada exitosamente.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
+            }
+        }
+
+
+
     }
-
-   
-
 }

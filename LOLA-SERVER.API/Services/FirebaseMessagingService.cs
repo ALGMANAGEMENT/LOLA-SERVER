@@ -42,5 +42,29 @@ namespace LOLA_SERVER.API.Services
             var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
             await request.ExecuteAsync();
         }
+
+        /// <summary>
+        /// Envía una notificación a un tópico específico.
+        /// </summary>
+        public async Task SendNotificationToTopicAsync(string title, string body, string topic)
+        {
+            var message = new Message
+            {
+                Topic = topic,
+                Notification = new Notification
+                {
+                    Title = title,
+                    Body = body
+                }
+            };
+
+            var sendMessageRequest = new SendMessageRequest
+            {
+                Message = message
+            };
+
+            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+            await request.ExecuteAsync();
+        }
     }
 }
