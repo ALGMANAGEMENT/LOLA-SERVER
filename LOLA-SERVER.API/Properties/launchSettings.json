@@ -35,7 +35,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:47127",
+      "applicationUrl": "http://localhost/services/LOLA-SERVER",
       "sslPort": 44384
     }
   }

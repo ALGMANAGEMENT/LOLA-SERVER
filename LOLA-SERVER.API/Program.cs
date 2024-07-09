@@ -11,8 +11,10 @@ namespace LOLA_SERVER.API
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    string port = Environment.GetEnvironmentVariable("PORT") ?? "5000"; 
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseUrls("http://*:" + Environment.GetEnvironmentVariable("PORT"));
+                    webBuilder.UseUrls($"http://*:{port}");
                 });
+
     }
 }

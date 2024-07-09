@@ -1,10 +1,13 @@
-﻿using FirebaseAdmin.Auth;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using FirebaseAdmin.Auth;
+using Microsoft.AspNetCore.Http;
 
 namespace LOLA_SERVER.API.Middlewares
 {
     public class FirebaseAuthenticationMiddleware
     {
-
         private readonly RequestDelegate _next;
 
         public FirebaseAuthenticationMiddleware(RequestDelegate next)
@@ -14,34 +17,33 @@ namespace LOLA_SERVER.API.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-
-            if (token != null)
+            if (!context.Request.Headers.ContainsKey("Authorization"))
             {
-                try
-                {
-                    var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
-                    context.Items["User"] = decodedToken;
-                }
-                catch
-                {
-                    context.Response.StatusCode = 401; 
-                    await context.Response.WriteAsync("Invalid token");
-                    return;
-                }
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Token de autorización no encontrado.");
+                return;
             }
 
-            await _next(context);
-        }
-    }
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-    public static class FirebaseAuthenticationMiddlewareExtensions
-    {
-        public static IApplicationBuilder UseFirebaseAuthentication(
-            this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<FirebaseAuthenticationMiddleware>();
-        }
+            if (string.IsNullOrEmpty(token))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Token de autorización vacío.");
+                return;
+            }
 
+            try
+            {
+                var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
+                context.Items["User"] = decodedToken;
+                await _next(context);
+            }
+            catch (Exception ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync($"Token inválido: {ex.Message}");
+            }
+        }
     }
 }
