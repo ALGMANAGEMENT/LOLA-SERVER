@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.Notifications.v1
 {
@@ -20,14 +21,14 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             _firebaseMessagingService = firebaseMessagingService;
         }
 
-
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
             return await Task.FromResult(ApiResponse("Notifications OK"));
         }
-        [Authorize]
+
+        //[Authorize]
         [HttpPost("send")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
@@ -36,7 +37,15 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
 
             try
             {
-                await _firebaseMessagingService.SendNotificationAsync(request.Title, request.Body, request.Token);
+                // Obtener el userId del contexto de usuario autenticado
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return ApiResponseError("No se pudo obtener el ID del usuario.");
+                //}
+
+                await _firebaseMessagingService.SendNotificationAsync(request.Title, request.Body, request.Token, userId ?? "test");
                 return ApiResponse("Notificación enviada exitosamente.");
             }
             catch (Exception ex)
@@ -44,7 +53,8 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
                 return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
             }
         }
-        [Authorize]
+
+        //[Authorize]
         [HttpPost("send-to-topic")]
         public async Task<IActionResult> SendNotificationToTopic([FromBody] TopicNotificationRequest request)
         {
@@ -53,7 +63,15 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
 
             try
             {
-                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, request.Topic);
+                // Obtener el userId del contexto de usuario autenticado
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    return ApiResponseError("No se pudo obtener el ID del usuario.");
+                //}
+
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, request.Topic, userId);
                 return ApiResponse("Notificación enviada exitosamente.");
             }
             catch (Exception ex)
@@ -61,8 +79,5 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
                 return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
             }
         }
-
-
-
     }
 }

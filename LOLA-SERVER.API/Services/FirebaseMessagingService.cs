@@ -2,6 +2,11 @@
 using Google.Apis.FirebaseCloudMessaging.v1;
 using Google.Apis.FirebaseCloudMessaging.v1.Data;
 using Google.Apis.Services;
+using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.V1;
+using LOLA_SERVER.API.Models.Notifications;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LOLA_SERVER.API.Services
@@ -9,6 +14,7 @@ namespace LOLA_SERVER.API.Services
     public class FirebaseMessagingService
     {
         private readonly FirebaseCloudMessagingService _firebaseMessagingService;
+        private readonly FirestoreDb _firestoreDb;
 
         public FirebaseMessagingService()
         {
@@ -20,9 +26,19 @@ namespace LOLA_SERVER.API.Services
                 HttpClientInitializer = credential,
                 ApplicationName = "LOLA_SERVER"
             });
+
+            // Inicializar el cliente de Firestore
+            var builder = new FirestoreClientBuilder
+            {
+                Credential = credential
+            };
+            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
         }
 
-        public async Task SendNotificationAsync(string title, string body, string token)
+        /// <summary>
+        /// Envía una notificación a un token específico y almacena la notificación en Firestore.
+        /// </summary>
+        public async Task SendNotificationAsync(string title, string body, string token, string userId)
         {
             var message = new Message
             {
@@ -41,12 +57,26 @@ namespace LOLA_SERVER.API.Services
 
             var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
             await request.ExecuteAsync();
+
+            // Almacenar la notificación en Firestore
+            await StoreNotificationAsync(new NotificationDBData
+            {
+                IdNotification = Guid.NewGuid().ToString(),
+                Message = body,
+                CreationDate = Timestamp.FromDateTime(DateTime.UtcNow),
+                Read = false,
+                Status = "Sent",
+                Type = "Individual",
+                TypeNotification = "General",
+                User = userId,
+                Topics = new List<string>() // No hay tópicos en una notificación a un token específico
+            });
         }
 
         /// <summary>
-        /// Envía una notificación a un tópico específico.
+        /// Envía una notificación a un tópico específico y almacena la notificación en Firestore.
         /// </summary>
-        public async Task SendNotificationToTopicAsync(string title, string body, string topic)
+        public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId)
         {
             var message = new Message
             {
@@ -65,6 +95,38 @@ namespace LOLA_SERVER.API.Services
 
             var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
             await request.ExecuteAsync();
+
+            // Almacenar la notificación en Firestore
+            var topicsArray = topic.Split('/');
+            await StoreNotificationAsync(new NotificationDBData
+            {
+                IdNotification = Guid.NewGuid().ToString(),
+                Message = body,
+                CreationDate = Timestamp.FromDateTime(DateTime.UtcNow),
+                Read = false,
+                Status = "Sent",
+                Type = "Topic",
+                TypeNotification = "General",
+                User = userId,
+                Topics = new List<string>(topicsArray)
+            });
+        }
+
+        /// <summary>
+        /// Almacena la notificación en Firestore.
+        /// </summary>
+        private async Task StoreNotificationAsync(NotificationDBData notification)
+        {
+            try
+            {
+                CollectionReference collection = _firestoreDb.Collection("Notifications");
+                await collection.AddAsync(notification);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+           
         }
     }
 }
