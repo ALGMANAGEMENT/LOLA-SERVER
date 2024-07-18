@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.Notifications.v1
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/v1/notifications")]
     [ApiController]
     public class NotificationsController : BaseController
@@ -21,31 +21,28 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             _firebaseMessagingService = firebaseMessagingService;
         }
 
-        //[Authorize]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
             return await Task.FromResult(ApiResponse("Notifications OK"));
         }
 
-        //[Authorize]
         [HttpPost("send")]
         public async Task<IActionResult> SendNotification([FromBody] NotificationRequest request)
         {
-            if (string.IsNullOrEmpty(request.Token) || string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
-                return ApiResponseError("Token, título y cuerpo de la notificación son requeridos.");
+            if (string.IsNullOrEmpty(request.Token))
+                return ApiResponseError("Token de la notificación es requerido.");
+
+            if (string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return ApiResponseError("Título y cuerpo de la notificación son requeridos.");
 
             try
             {
                 // Obtener el userId del contexto de usuario autenticado
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
 
-                //if (string.IsNullOrEmpty(userId))
-                //{
-                //    return ApiResponseError("No se pudo obtener el ID del usuario.");
-                //}
+                await _firebaseMessagingService.SendNotificationAsync(request.Title, request.Body, request.Token, userId);
 
-                await _firebaseMessagingService.SendNotificationAsync(request.Title, request.Body, request.Token, userId ?? "test");
                 return ApiResponse("Notificación enviada exitosamente.");
             }
             catch (Exception ex)
@@ -54,25 +51,62 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             }
         }
 
-        //[Authorize]
-        [HttpPost("send-to-topic")]
-        public async Task<IActionResult> SendNotificationToTopic([FromBody] TopicNotificationRequest request)
+        [HttpPost("send-to-city/{city}")]
+        public async Task<IActionResult> SendNotificationToCity([FromBody] NotificationRequest request, string city)
         {
-            if (string.IsNullOrEmpty(request.Topic) || string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
-                return ApiResponseError("Tópico, título y cuerpo de la notificación son requeridos.");
+            if (string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return ApiResponseError("Título y cuerpo de la notificación son requeridos.");
 
             try
             {
-                // Obtener el userId del contexto de usuario autenticado
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
+                var topic = $"{city}/";
 
-                //if (string.IsNullOrEmpty(userId))
-                //{
-                //    return ApiResponseError("No se pudo obtener el ID del usuario.");
-                //}
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
 
-                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, request.Topic, userId);
-                return ApiResponse("Notificación enviada exitosamente.");
+                return ApiResponse("Notificación enviada a cuidadores en la ciudad exitosamente.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
+            }
+        }
+
+        [HttpPost("send-to-admin")]
+        public async Task<IActionResult> SendNotificationToAdmin([FromBody] NotificationRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return ApiResponseError("Título y cuerpo de la notificación son requeridos.");
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
+                var topic = "admin";
+
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
+
+                return ApiResponse("Notificación enviada a administradores exitosamente.");
+            }
+            catch (Exception ex)
+            {
+                return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
+            }
+        }
+
+        [HttpPost("send-to-client/{clientId}")]
+        public async Task<IActionResult> SendNotificationToClient([FromBody] NotificationRequest request, string clientId)
+        {
+            if (string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return ApiResponseError("Título y cuerpo de la notificación son requeridos.");
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
+                var topic = $"client/{clientId}";
+
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
+
+                return ApiResponse("Notificación enviada al cliente exitosamente.");
             }
             catch (Exception ex)
             {
