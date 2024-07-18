@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 public class Startup
@@ -90,7 +91,12 @@ public class Startup
 
     private void RegisterControllers(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers()
+                 .AddJsonOptions(options =>
+                 {
+                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                     options.JsonSerializerOptions.PropertyNamingPolicy = null; 
+                 });
     }
 
     private void ConfigureSwagger(IServiceCollection services)
