@@ -41,24 +41,29 @@ public class Startup
 
     private void ConfigureAuthentication(IServiceCollection services)
     {
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = "https://accounts.google.com";
+                options.Authority = "https://securetoken.google.com/lola-app-e5f71";
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = "https://accounts.google.com",
+                    ValidIssuers = new[]
+                    {
+                        "https://securetoken.google.com/lola-app-e5f71",
+                        "https://accounts.google.com"
+                    },
                     ValidateAudience = true,
                     ValidAudiences = new[]
                     {
-                    "315094815894-bdc0b9hfq477eapk624l57lq9jji1001.apps.googleusercontent.com",
-                    "315094815894-ga563q20tj5kafbgo8ith2ljhm9pm2kk.apps.googleusercontent.com"
+                        "lola-app-e5f71",
+                        "315094815894-bdc0b9hfq477eapk624l57lq9jji1001.apps.googleusercontent.com",
+                        "315094815894-ga563q20tj5kafbgo8ith2ljhm9pm2kk.apps.googleusercontent.com"
                     },
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero // Reduce la tolerancia predeterminada en el tiempo de expiración del token
                 };
-
                 options.Events = new JwtBearerEvents
                 {
                     OnAuthenticationFailed = context =>

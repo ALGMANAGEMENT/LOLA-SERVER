@@ -1,18 +1,23 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Firestore;
+using Google.Cloud.Firestore.V1;
 using Google.Cloud.Storage.V1;
 using LOLA_SERVER.API.Controllers.Base;
+using LOLA_SERVER.API.Models.Images;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LOLA_SERVER.API.Controllers.Images.v1
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/v1/images")]
     [ApiController]
     public class ImagesController : BaseController
@@ -20,13 +25,19 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
         private readonly StorageClient _storageClient;
         private readonly string _bucketName = "lola-app-e5f71.appspot.com";
-
+        private readonly FirebaseApp _firebaseApp;
+        private readonly FirestoreDb _firestoreDb;
         public ImagesController()
         {
             // Inicializar el cliente de Firebase Storage
             string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
             var credential = GoogleCredential.FromFile(credentialPath);
             _storageClient = StorageClient.Create(credential);
+            var builder = new FirestoreClientBuilder
+            {
+                Credential = credential
+            };
+            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
         }
 
         [HttpPost("upload")]
@@ -38,7 +49,7 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
             if (files == null || !files.Any())
                 return ApiResponseError("No se ha proporcionado un archivo válido.");
-
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
             try
             {
                 var uploadedUrls = new List<string>();
@@ -59,7 +70,17 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
                         var publicUrl = $"https://storage.googleapis.com/{_bucketName}/{storageObject.Name}";
                         uploadedUrls.Add(publicUrl);
-                        //await SaveImageInfoToDatabase(publicUrl, uploadInfo, fileName);
+                        await SaveImageInfoToFirebase(new ImageInfoDB
+                        {
+                            FilePath = folderSanitazed,
+                            NameHash = uniqueFileName,
+                            OriginalFileName = uniqueFileName,
+                            CreatedDate = DateTime.UtcNow,
+                            UploadDate = DateTime.UtcNow,
+                            Url = publicUrl,
+                            UserId = userId
+
+                        });
                     }
                 }
 
@@ -92,6 +113,22 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
             var fileExtension = Path.GetExtension(file.FileName);
             return $"{fileNameHash}{fileExtension}";
+
+        }
+
+
+        private async Task SaveImageInfoToFirebase(ImageInfoDB ImageInformation)
+        {
+            try
+            {
+
+                CollectionReference collection = _firestoreDb.Collection("Images");
+                await collection.AddAsync(ImageInformation);
+            }
+            catch (Exception ex) {
+                throw new Exception(ex.Message);
+            }
+
 
         }
 
