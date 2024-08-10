@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LOLA_SERVER.API.Controllers.Images.v1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/images")]
     [ApiController]
     public class ImagesController : BaseController
@@ -28,38 +31,70 @@ namespace LOLA_SERVER.API.Controllers.Images.v1
 
         [HttpPost("upload")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string folder = "")
+        public async Task<IActionResult> UploadImage(List< IFormFile> files, [FromQuery] string folder = "")
         {
             if (string.IsNullOrEmpty(folder))
                 return ApiResponseError("Es necesario especificar una carpeta.");
 
-            // Validar las carpetas permitidas
-            var allowedFolders = new[] { "pets", "users", "histories" };
-            if (!allowedFolders.Contains(folder.ToLower()))
-                return ApiResponseError("La carpeta especificada no es válida.");
-
-            if (file == null || file.Length == 0)
+            if (files == null || !files.Any())
                 return ApiResponseError("No se ha proporcionado un archivo válido.");
 
             try
             {
-                var fileName = $"{folder}/{DateTime.UtcNow.Ticks}_{file.FileName}";
+                var uploadedUrls = new List<string>();
 
-                using var stream = file.OpenReadStream();
-                var storageObject = await _storageClient.UploadObjectAsync(_bucketName, fileName, file.ContentType, stream, new UploadObjectOptions
+                foreach (var file in files)
                 {
-                    PredefinedAcl = PredefinedObjectAcl.PublicRead
-                });
+                    if (file.Length > 0)
+                    {
+                        var uniqueFileName = GenerateUniqueFileName(file);
+                        var folderSanitazed = SanitazeFolderPath(folder);
+                        var filePath = SanitazeFolderPath($"{folderSanitazed}/{uniqueFileName}");
 
-                var publicUrl = $"https://storage.googleapis.com/{_bucketName}/{storageObject.Name}";
+                        using var stream = file.OpenReadStream();
+                        var storageObject = await _storageClient.UploadObjectAsync(_bucketName, filePath, file.ContentType, stream, new UploadObjectOptions
+                        {
+                            PredefinedAcl = PredefinedObjectAcl.PublicRead
+                        });
 
-                return ApiResponse(new { Url = publicUrl });
+                        var publicUrl = $"https://storage.googleapis.com/{_bucketName}/{storageObject.Name}";
+                        uploadedUrls.Add(publicUrl);
+                        //await SaveImageInfoToDatabase(publicUrl, uploadInfo, fileName);
+                    }
+                }
+
+                return ApiResponse(new { Urls = uploadedUrls });
             }
             catch (Exception ex)
             {
                 return ApiResponseServerError($"Error interno al cargar la imagen: {ex.Message}");
             }
         }
+
+
+        private string SanitazeFolderPath(string PathFolder)
+        {
+
+            var sanitized = Regex.Replace(PathFolder, @"[^a-zA-Z0-9/]", "").ToString();
+
+            sanitized = Regex.Replace(sanitized, @"/+", "/");
+
+            return sanitized.Trim().TrimEnd('/').TrimStart('/');
+
+        }
+
+
+        private string GenerateUniqueFileName(IFormFile file)
+        {
+            using var sha256 = SHA256.Create();
+            var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes($"{file.FileName}{DateTime.UtcNow.Ticks}"));
+            var fileNameHash = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            var fileExtension = Path.GetExtension(file.FileName);
+            return $"{fileNameHash}{fileExtension}";
+
+        }
+
     }
 
 }
