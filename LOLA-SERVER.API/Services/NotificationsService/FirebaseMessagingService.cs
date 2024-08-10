@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace LOLA_SERVER.API.Services
+namespace LOLA_SERVER.API.Services.MessagingService
 {
     public class FirebaseMessagingService
     {
@@ -126,7 +126,7 @@ namespace LOLA_SERVER.API.Services
             {
                 throw new Exception(ex.Message);
             }
-           
+
         }
     }
 }

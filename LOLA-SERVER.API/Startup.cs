@@ -1,6 +1,8 @@
 ﻿using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
+using LOLA_SERVER.API.Interfaces.Services;
 using LOLA_SERVER.API.Services;
+using LOLA_SERVER.API.Services.MessagingService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -137,6 +139,12 @@ public class Startup
         });
     }
 
+
+    public void DependencyInyection(IServiceCollection services)
+    {
+        services.AddScoped<IImageService, ImageService>();
+    }
+
     public void ConfigureServices(IServiceCollection services)
     {
         ConfigureCors(services);
@@ -145,6 +153,7 @@ public class Startup
         RegisterServices(services);
         RegisterControllers(services);
         ConfigureSwagger(services);
+        DependencyInyection(services);
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
