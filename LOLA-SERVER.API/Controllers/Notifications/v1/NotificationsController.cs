@@ -1,11 +1,11 @@
 ﻿using LOLA_SERVER.API.Controllers.Base;
 using LOLA_SERVER.API.Models.Notifications;
-using LOLA_SERVER.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using LOLA_SERVER.API.Services.MessagingService;
 
 namespace LOLA_SERVER.API.Controllers.Notifications.v1
 {

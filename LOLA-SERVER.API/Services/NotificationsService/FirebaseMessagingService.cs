@@ -1,4 +1,5 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using Google;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.FirebaseCloudMessaging.v1;
 using Google.Apis.FirebaseCloudMessaging.v1.Data;
 using Google.Apis.Services;
@@ -9,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace LOLA_SERVER.API.Services
+namespace LOLA_SERVER.API.Services.MessagingService
 {
     public class FirebaseMessagingService
     {
@@ -78,38 +79,58 @@ namespace LOLA_SERVER.API.Services
         /// </summary>
         public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId)
         {
-            var message = new Message
+
+            try
             {
-                Topic = topic,
-                Notification = new Notification
+                var formattedTopic = topic.Trim('/');
+                formattedTopic = formattedTopic.StartsWith("topics-") ? formattedTopic : $"topics-{formattedTopic}";
+                formattedTopic = $"{formattedTopic}".ToLower();
+                var message = new Message
                 {
-                    Title = title,
-                    Body = body
-                }
-            };
+                    Topic = formattedTopic,
+                    Notification = new Notification
+                    {
+                        Title = title,
+                        Body = body
+                    }
+                };
 
-            var sendMessageRequest = new SendMessageRequest
+                var sendMessageRequest = new SendMessageRequest
+                {
+                    Message = message
+                };
+
+                var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+                await request.ExecuteAsync();
+
+                // Almacenar la notificación en Firestore
+                var topicsArray = topic.Split('/');
+                await StoreNotificationAsync(new NotificationDBData
+                {
+                    IdNotification = Guid.NewGuid().ToString(),
+                    Message = body,
+                    CreationDate = Timestamp.FromDateTime(DateTime.UtcNow),
+                    Read = false,
+                    Status = "Sent",
+                    Type = "Topic",
+                    TypeNotification = "General",
+                    User = userId,
+                    Topics = new List<string>(topicsArray)
+                });
+            }
+            catch (GoogleApiException gex)
             {
-                Message = message
-            };
-
-            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
-            await request.ExecuteAsync();
-
-            // Almacenar la notificación en Firestore
-            var topicsArray = topic.Split('/');
-            await StoreNotificationAsync(new NotificationDBData
+                Console.WriteLine($"Google API Error sending notification to topic {topic}:");
+                Console.WriteLine($"Error code: {gex.Error.Code}");
+                Console.WriteLine($"Error message: {gex.Error.Message}");
+                Console.WriteLine($"Error details: {gex.Error.ToString()}");
+            }
+            catch (Exception ex)
             {
-                IdNotification = Guid.NewGuid().ToString(),
-                Message = body,
-                CreationDate = Timestamp.FromDateTime(DateTime.UtcNow),
-                Read = false,
-                Status = "Sent",
-                Type = "Topic",
-                TypeNotification = "General",
-                User = userId,
-                Topics = new List<string>(topicsArray)
-            });
+                Console.WriteLine($"Error sending notification to topic {topic}: {ex.Message}");
+            }
+
+            
         }
 
         /// <summary>
@@ -126,7 +147,7 @@ namespace LOLA_SERVER.API.Services
             {
                 throw new Exception(ex.Message);
             }
-           
+
         }
     }
 }
