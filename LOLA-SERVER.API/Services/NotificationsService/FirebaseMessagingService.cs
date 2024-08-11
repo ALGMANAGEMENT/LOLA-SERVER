@@ -83,8 +83,8 @@ namespace LOLA_SERVER.API.Services.MessagingService
             try
             {
                 var formattedTopic = topic.Trim('/');
-                formattedTopic = formattedTopic.StartsWith("topics/") ? formattedTopic : $"topics/{formattedTopic}";
-                formattedTopic = $"/{formattedTopic}/";
+                formattedTopic = formattedTopic.StartsWith("topics-") ? formattedTopic : $"topics-{formattedTopic}";
+                formattedTopic = $"{formattedTopic}".ToLower();
                 var message = new Message
                 {
                     Topic = formattedTopic,
