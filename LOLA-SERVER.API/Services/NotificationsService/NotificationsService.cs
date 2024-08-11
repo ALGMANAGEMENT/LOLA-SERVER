@@ -1,23 +1,21 @@
-﻿using Google;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.FirebaseCloudMessaging.v1;
+﻿using Google.Apis.Auth.OAuth2;
 using Google.Apis.FirebaseCloudMessaging.v1.Data;
+using Google.Apis.FirebaseCloudMessaging.v1;
 using Google.Apis.Services;
-using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
+using Google.Cloud.Firestore;
+using LOLA_SERVER.API.Interfaces.Services;
 using LOLA_SERVER.API.Models.Notifications;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace LOLA_SERVER.API.Services.MessagingService
+namespace LOLA_SERVER.API.Services.NotificationsService
 {
-    public class FirebaseMessagingService
+    public class NotificationsService : INotificationsService
     {
+
         private readonly FirebaseCloudMessagingService _firebaseMessagingService;
         private readonly FirestoreDb _firestoreDb;
 
-        public FirebaseMessagingService()
+        public NotificationsService()
         {
             // Inicializar el cliente de Firebase Messaging
             string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
@@ -79,15 +77,11 @@ namespace LOLA_SERVER.API.Services.MessagingService
         /// </summary>
         public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId)
         {
-
             try
             {
-                var formattedTopic = topic.Trim('/');
-                formattedTopic = formattedTopic.StartsWith("topics/") ? formattedTopic : $"topics/{formattedTopic}";
-                formattedTopic = $"/{formattedTopic}/";
                 var message = new Message
                 {
-                    Topic = formattedTopic,
+                    Topic = topic,
                     Notification = new Notification
                     {
                         Title = title,
@@ -118,19 +112,14 @@ namespace LOLA_SERVER.API.Services.MessagingService
                     Topics = new List<string>(topicsArray)
                 });
             }
-            catch (GoogleApiException gex)
+            catch(Exception ex)
             {
-                Console.WriteLine($"Google API Error sending notification to topic {topic}:");
-                Console.WriteLine($"Error code: {gex.Error.Code}");
-                Console.WriteLine($"Error message: {gex.Error.Message}");
-                Console.WriteLine($"Error details: {gex.Error.ToString()}");
-            }
-            catch (Exception ex)
-            {
+                // Log the error but continue with other notifications
                 Console.WriteLine($"Error sending notification to topic {topic}: {ex.Message}");
             }
 
-            
+
+           
         }
 
         /// <summary>

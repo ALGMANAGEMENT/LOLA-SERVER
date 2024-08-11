@@ -39,7 +39,7 @@ namespace LOLA_SERVER.API.Services.Users
 
         public Dictionary<string, object> GenerateRandomUbication()
         {
-            const double radiusKm = 20;
+            const double radiusKm = 10;
             const double earthRadiusKm = 6371;
 
             // Convert radius from kilometers to radians
@@ -70,6 +70,14 @@ namespace LOLA_SERVER.API.Services.Users
                         { "latitude", newLatitude },
                         { "longitude", newLongitude }
                     }
+                    
+                },
+                {
+                    "region", new Dictionary<string, object>
+                    {
+                        {"city", "SOGAMOSO" },
+                        {"country","Colombia" }
+                    }
                 },
                 { "type", "Point" }
             };
@@ -79,7 +87,7 @@ namespace LOLA_SERVER.API.Services.Users
         {
             return new User
             {
-                Id = Guid.NewGuid().ToString(),
+                Id = Guid.NewGuid().ToString("N"),
                 Name = GenerateRandomName(),
                 Email = GenerateRandomEmail(),
                 UserType = "care",
@@ -128,7 +136,7 @@ namespace LOLA_SERVER.API.Services.Users
 
         public async Task SaveUserToFirestore(User user)
         {
-            var userDoc = _firestoreDb.Collection("users").Document(user.Id);
+            var userDoc = _firestoreDb.Collection("Users").Document(user.Id);
             await userDoc.SetAsync(user);
         }
     }

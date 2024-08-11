@@ -3,6 +3,7 @@ using Google.Apis.Auth.OAuth2;
 using LOLA_SERVER.API.Interfaces.Services;
 using LOLA_SERVER.API.Services;
 using LOLA_SERVER.API.Services.MessagingService;
+using LOLA_SERVER.API.Services.NotificationsService;
 using LOLA_SERVER.API.Services.PetServicesService;
 using LOLA_SERVER.API.Services.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -147,6 +148,7 @@ public class Startup
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IPetServicesService, PetServicesService>();
         services.AddScoped<IUsersService,UsersService>();
+        services.AddSingleton<INotificationsService, NotificationsService>();
     }
 
     public void ConfigureServices(IServiceCollection services)
