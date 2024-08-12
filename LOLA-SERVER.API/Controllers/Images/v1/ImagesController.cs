@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.Images.v1
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/v1/images")]
     [ApiController]
     public class ImagesController : BaseController
