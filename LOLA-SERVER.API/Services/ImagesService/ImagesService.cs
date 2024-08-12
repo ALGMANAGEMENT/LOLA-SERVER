@@ -38,7 +38,7 @@ namespace LOLA_SERVER.API.Services
                 if (file.Length > 0)
                 {
                     var uniqueFileName = GenerateUniqueFileName(file);
-                    var filePath = SanitizeFolderPath($"{folder}/{uniqueFileName}");
+                    var filePath = $"{SanitizeFolderPath($"{folder}")}/{uniqueFileName}";
 
                     using var stream = file.OpenReadStream();
                     var storageObject = await _storageClient.UploadObjectAsync(_bucketName, filePath, file.ContentType, stream, new UploadObjectOptions
