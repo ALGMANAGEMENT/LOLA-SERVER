@@ -38,8 +38,7 @@ namespace LOLA_SERVER.API.Services
                 if (file.Length > 0)
                 {
                     var uniqueFileName = GenerateUniqueFileName(file);
-                    var folderSanitized = SanitizeFolderPath(folder);
-                    var filePath = SanitizeFolderPath($"{folderSanitized}/{uniqueFileName}");
+                    var filePath = $"{SanitizeFolderPath($"{folder}")}/{uniqueFileName}";
 
                     using var stream = file.OpenReadStream();
                     var storageObject = await _storageClient.UploadObjectAsync(_bucketName, filePath, file.ContentType, stream, new UploadObjectOptions
@@ -51,7 +50,7 @@ namespace LOLA_SERVER.API.Services
                     uploadedUrls.Add(publicUrl);
                     await SaveImageInfoToFirebase(new ImageInfoDB
                     {
-                        FilePath = folderSanitized,
+                        FilePath = folder,
                         NameHash = uniqueFileName,
                         OriginalFileName = uniqueFileName,
                         CreatedDate = DateTime.UtcNow,

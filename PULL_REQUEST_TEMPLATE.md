@@ -5,9 +5,8 @@ Feature: (description) [ClickUp#XXX]
 Summary:
 summary description [ClickUp#XXX]
 
-Azure related issue:
-[ClickUp#XXX]
-
+ClickUp related issue:
+https://app.clickup.com/t/xxxxx
 Changes made:
 
 - List changes or fixes
