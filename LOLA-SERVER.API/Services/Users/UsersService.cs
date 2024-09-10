@@ -155,7 +155,7 @@ namespace LOLA_SERVER.API.Services.Users
                 Id = Guid.NewGuid().ToString("N"),
                 Active = _random.Next(2) == 0,
                 IdUser = userId,
-                Location = GenerateRandomLocation(),
+                Location = GenerateRandomUbication(),
                 RecoveryPets = _random.Next(2) == 0,
                 ServiceSelected = _random.Next(2) == 0 ? "GUARDERIA" : "PELUQUERIA",
                 SizePets = GenerateRandomSizePets(),
@@ -166,14 +166,7 @@ namespace LOLA_SERVER.API.Services.Users
             };
         }
 
-        private Dictionary<string, object> GenerateRandomLocation()
-        {
-            return new Dictionary<string, object>
-            {
-                { "latitude", _random.NextDouble() * 180 - 90 },
-                { "longitude", _random.NextDouble() * 360 - 180 }
-            };
-        }
+    
 
         private List<string> GenerateRandomSizePets()
         {
