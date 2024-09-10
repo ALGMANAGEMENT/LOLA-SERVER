@@ -7,12 +7,13 @@ using LOLA_SERVER.API.Services.NotificationsService;
 using LOLA_SERVER.API.Utils.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel;
 using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.PetServices.V1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/pet-service")]
     [ApiController]
     [Produces("application/json")]
@@ -43,6 +44,8 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> FindNearbyCaregivers(
             [FromQuery, DefaultValue("sogamoso")] string City,
+            [FromQuery, DefaultValue("xk4keuRmmN9mFhRYC48D")] string TypeService,
+            [FromQuery, DefaultValue("OJKRlql5tLKB4eZNSjyF")] string BookingId,
             [FromQuery, DefaultValue("roHMfAuwRi0NjYV2LwEz")] string SearchRadioId,
             [FromBody] NearbyCaregiverRequest nearbyCaregiverRequest)
         {
@@ -50,11 +53,15 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
             {
                 return ApiResponseError("Coordinates are required");
             }
+            if (TypeService.IsNullOrEmpty())
+            {
+                return ApiResponseError("Type Opportunity are required");
+            }
 
             try
             {
                 var senderUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "userNotifications";
-                var (nearbyCaregivers, topics) = await _petServicesService.FindNearbyCaregivers(nearbyCaregiverRequest, senderUser, SearchRadioId, City);
+                var (nearbyCaregivers, topics) = await _petServicesService.FindNearbyCaregivers(nearbyCaregiverRequest, senderUser, SearchRadioId, City, TypeService, BookingId);
 
                 if (nearbyCaregiverRequest.NotificationData != null)
                 {
