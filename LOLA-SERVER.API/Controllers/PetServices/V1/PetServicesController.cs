@@ -45,6 +45,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
         public async Task<IActionResult> FindNearbyCaregivers(
             [FromQuery, DefaultValue("sogamoso")] string City,
             [FromQuery, DefaultValue("xk4keuRmmN9mFhRYC48D")] string TypeService,
+            [FromQuery, DefaultValue("OJKRlql5tLKB4eZNSjyF")] string BookingId,
             [FromQuery, DefaultValue("roHMfAuwRi0NjYV2LwEz")] string SearchRadioId,
             [FromBody] NearbyCaregiverRequest nearbyCaregiverRequest)
         {
@@ -60,7 +61,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
             try
             {
                 var senderUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "userNotifications";
-                var (nearbyCaregivers, topics) = await _petServicesService.FindNearbyCaregivers(nearbyCaregiverRequest, senderUser, SearchRadioId, City, TypeService);
+                var (nearbyCaregivers, topics) = await _petServicesService.FindNearbyCaregivers(nearbyCaregiverRequest, senderUser, SearchRadioId, City, TypeService, BookingId);
 
                 if (nearbyCaregiverRequest.NotificationData != null)
                 {

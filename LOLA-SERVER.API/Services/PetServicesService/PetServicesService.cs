@@ -29,7 +29,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
         }
 
         public async Task<(List<Caregiver> nearbyCaregivers, List<string> topics)> FindNearbyCaregivers(NearbyCaregiverRequest nearbyCaregiverRequest,
-    string senderUser, string searchRadioId, string city, string typeServiceId)
+            string senderUser, string searchRadioId, string city, string typeServiceId, string BookingId)
         {
             var coordinates = nearbyCaregiverRequest.Coordinates;
             var radiusKm = await GetRadiusKmFromFirebase(searchRadioId);
@@ -39,6 +39,8 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             var servicesCollection = _firestoreDb.Collection("Services");
             var servicesQuery = servicesCollection.WhereEqualTo("ServiceSelected", typeServiceRequired);
             var servicesSnapshot = await servicesQuery.GetSnapshotAsync();
+            var bookingSnapshot = await _firestoreDb.Collection("bookings").Document(BookingId).GetSnapshotAsync();
+            var booking = bookingSnapshot.ConvertTo<Booking>();
 
             var nearbyCaregivers = new List<Caregiver>();
             var topics = new List<string>();
@@ -89,6 +91,20 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                     }
                 }
             }
+
+
+            foreach (var caregiver in nearbyCaregivers)
+            {
+                if (!booking.UrlCares.Contains(caregiver.Id))
+                {
+                    booking.UrlCares.Add(caregiver.Id);
+                }
+            }
+
+            // Update the booking document in Firestore
+            await _firestoreDb.Collection("bookings").Document(BookingId).SetAsync(booking, SetOptions.MergeAll);
+
+
             return (nearbyCaregivers, topics);
         }
 
