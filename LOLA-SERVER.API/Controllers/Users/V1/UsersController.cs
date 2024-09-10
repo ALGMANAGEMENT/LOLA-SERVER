@@ -15,18 +15,18 @@ namespace LOLA_SERVER.API.Controllers.Users.V1
             _usersService = usersService;
         }
 
-        //[HttpPost("generate-dummy-users")]
-        //public async Task<IActionResult> GenerateDummyUsers([FromBody] Coordinates coordinates = null,
-        //    [FromQuery] int count = 10)
-        //{
-        //    if (count <= 0 || count > 100)
-        //    {
-        //        return BadRequest("Count must be between 1 and 100.");
-        //    }
+        [HttpPost("generate-dummy-users")]
+        public async Task<IActionResult> GenerateDummyUsers([FromBody] Coordinates coordinates = null,
+            [FromQuery] int count = 10)
+        {
+            if (count <= 0 || count > 100)
+            {
+                return BadRequest("Count must be between 1 and 100.");
+            }
 
-        //    var users = await _usersService.GenerateAndSaveDummyUsers(count, coordinates);
-        //    return Ok(new { Message = $"{count} dummy users generated and saved.", Users = users });
-        //}
+            var users = await _usersService.GenerateAndSaveDummyUsers(count, coordinates);
+            return Ok(new { Message = $"{count} dummy users generated and saved.", Users = users });
+        }
 
     }
 }
