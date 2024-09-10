@@ -27,13 +27,15 @@ namespace LOLA_SERVER.API.Services.PetServicesService
 
         }
 
-        public async Task<(List<Caregiver> nearbyCaregivers, List<string> topics)> FindNearbyCaregivers(NearbyCaregiverRequest nearbyCaregiverRequest, string senderUser, string searchRadioId, string city)
+        public async Task<(List<Caregiver> nearbyCaregivers, List<string> topics)> FindNearbyCaregivers(NearbyCaregiverRequest nearbyCaregiverRequest, 
+            string senderUser, string searchRadioId, string city, string typeServiceId)
         {
             var coordinates = nearbyCaregiverRequest.Coordinates;
             var radiusKm = await GetRadiusKmFromFirebase(searchRadioId);
 
             var usersCollection = _firestoreDb.Collection("Users");
             var query = usersCollection.WhereEqualTo("UserType", "care");
+
             var snapshot = await query.GetSnapshotAsync();
 
             var nearbyCaregivers = new List<Caregiver>();

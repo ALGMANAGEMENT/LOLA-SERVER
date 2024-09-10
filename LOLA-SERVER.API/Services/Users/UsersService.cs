@@ -33,6 +33,7 @@ namespace LOLA_SERVER.API.Services.Users
                 var user = GenerateDummyUser();
                 users.Add(user);
                 await SaveUserToFirestore(user);
+                await GenerateAndSaveRandomService(user.Id);
             }
             return users;
         }
@@ -137,7 +138,99 @@ namespace LOLA_SERVER.API.Services.Users
         public async Task SaveUserToFirestore(User user)
         {
             var userDoc = _firestoreDb.Collection("Users").Document(user.Id);
+
             await userDoc.SetAsync(user);
         }
+
+        public async Task GenerateAndSaveRandomService(string userId)
+        {
+            var service = GenerateRandomService(userId);
+            await SaveServiceToFirestore(service);
+        }
+
+        private Service GenerateRandomService(string userId)
+        {
+            return new Service
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Active = _random.Next(2) == 0,
+                IdUser = userId,
+                Location = GenerateRandomLocation(),
+                RecoveryPets = _random.Next(2) == 0,
+                ServiceSelected = _random.Next(2) == 0 ? "GUARDERIA" : "PELUQUERIA",
+                SizePets = GenerateRandomSizePets(),
+                TimeHavePets = GenerateRandomTimeHavePets(),
+                TypePetsCare = GenerateRandomTypePetsCare(),
+                TypeofServicesGrooming = GenerateRandomTypeofServicesGrooming(),
+                ValueService = GenerateRandomValueService()
+            };
+        }
+
+        private Dictionary<string, object> GenerateRandomLocation()
+        {
+            return new Dictionary<string, object>
+            {
+                { "latitude", _random.NextDouble() * 180 - 90 },
+                { "longitude", _random.NextDouble() * 360 - 180 }
+            };
+        }
+
+        private List<string> GenerateRandomSizePets()
+        {
+            var sizes = new List<string> { "small", "medium", "large" };
+            return sizes.GetRange(0, _random.Next(1, sizes.Count + 1));
+        }
+
+        private string GenerateRandomTimeHavePets()
+        {
+            var times = new List<string> { "less than 1 year", "1-3 years", "3-5 years", "more than 5 years" };
+            return times[_random.Next(times.Count)];
+        }
+
+        private List<string> GenerateRandomTypePetsCare()
+        {
+            var types = new List<string> { "dog", "cat", "bird", "fish", "rabbit" };
+            var selectedTypes = new List<string>();
+            int numTypes = _random.Next(1, types.Count + 1);
+            for (int i = 0; i < numTypes; i++)
+            {
+                var type = types[_random.Next(types.Count)];
+                if (!selectedTypes.Contains(type))
+                {
+                    selectedTypes.Add(type);
+                }
+            }
+            return selectedTypes;
+        }
+
+        private List<Dictionary<string, string>> GenerateRandomTypeofServicesGrooming()
+        {
+            var services = new List<Dictionary<string, string>>();
+            var possibleServices = new List<string> { "bath", "haircut", "nail trimming", "teeth cleaning" };
+            int numServices = _random.Next(1, possibleServices.Count + 1);
+            for (int i = 0; i < numServices; i++)
+            {
+                services.Add(new Dictionary<string, string>
+                {
+                    { "service", possibleServices[_random.Next(possibleServices.Count)] },
+                    { "price", $"{_random.Next(10, 101)}" }
+                });
+            }
+            return services;
+        }
+
+        private string GenerateRandomValueService()
+        {
+            return $"{_random.Next(20, 201)}";
+        }
+
+        private async Task SaveServiceToFirestore(Service service)
+        {
+            var serviceDoc = _firestoreDb.Collection("Services").Document(service.Id);
+            await serviceDoc.SetAsync(service);
+        }
+
+
+
     }
 }
