@@ -113,5 +113,43 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
                 return ApiResponseServerError($"Error interno al enviar la notificación: {ex.Message}");
             }
         }
+
+
+        [HttpPost("send-multi-users")]
+        public async Task<IActionResult> SendNotificationToUsers([FromBody] MultiUserNotificationRequest request)
+        {
+            if (request.UserIds == null || !request.UserIds.Any())
+                return BadRequest("At least one user ID is required.");
+            if (string.IsNullOrEmpty(request.Title) || string.IsNullOrEmpty(request.Body))
+                return BadRequest("Title and body of the notification are required.");
+
+            var successCount = 0;
+            var failureCount = 0;
+            var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+
+            try
+            {
+                foreach (var userId in request.UserIds)
+                {
+                    var topic = $"client/{userId}";
+                    try
+                    {
+                        await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, senderId);
+                        successCount++;
+                    }
+                    catch (Exception)
+                    {
+                        failureCount++;
+                    }
+                }
+
+                return Ok(new { Message = "Notifications sent.", SuccessCount = successCount, FailureCount = failureCount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error when sending notifications: {ex.Message}");
+            }
+        }
+
     }
 }

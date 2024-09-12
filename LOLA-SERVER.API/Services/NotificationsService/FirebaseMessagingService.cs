@@ -36,6 +36,11 @@ namespace LOLA_SERVER.API.Services.MessagingService
             _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
         }
 
+
+
+      
+
+
         /// <summary>
         /// Envía una notificación a un token específico y almacena la notificación en Firestore.
         /// </summary>
@@ -132,6 +137,10 @@ namespace LOLA_SERVER.API.Services.MessagingService
 
             
         }
+
+
+
+
 
         /// <summary>
         /// Almacena la notificación en Firestore.
