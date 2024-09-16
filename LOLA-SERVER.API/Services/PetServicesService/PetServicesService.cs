@@ -36,7 +36,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             var typeServiceSnapshot = await _firestoreDb.Collection("TypesServices").Document(typeServiceId).GetSnapshotAsync();
             var typeService = typeServiceSnapshot.ConvertTo<TypeService>();
             var typeServiceRequired = typeService.value;
-            var servicesCollection = _firestoreDb.Collection("Services");
+            var servicesCollection = _firestoreDb.Collection("services");
             var servicesQuery = servicesCollection.WhereEqualTo("ServiceSelected", typeServiceRequired);
             var servicesSnapshot = await servicesQuery.GetSnapshotAsync();
             var bookingSnapshot = await _firestoreDb.Collection("bookings").Document(BookingId).GetSnapshotAsync();
@@ -110,7 +110,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
 
         private async Task<Caregiver> GetCaregiverFromUser(string userId)
         {
-            var userDoc = await _firestoreDb.Collection("Users").Document(userId).GetSnapshotAsync();
+            var userDoc = await _firestoreDb.Collection("users").Document(userId).GetSnapshotAsync();
             if (userDoc.Exists)
             {
                 var userData = userDoc.ToDictionary();

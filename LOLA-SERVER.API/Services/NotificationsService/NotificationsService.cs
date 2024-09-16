@@ -129,7 +129,7 @@ namespace LOLA_SERVER.API.Services.NotificationsService
         {
             try
             {
-                CollectionReference collection = _firestoreDb.Collection("Notifications");
+                CollectionReference collection = _firestoreDb.Collection("notifications");
                 await collection.AddAsync(notification);
             }
             catch (Exception ex)
