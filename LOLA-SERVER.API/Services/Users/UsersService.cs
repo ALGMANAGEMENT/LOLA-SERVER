@@ -137,7 +137,7 @@ namespace LOLA_SERVER.API.Services.Users
 
         public async Task SaveUserToFirestore(User user)
         {
-            var userDoc = _firestoreDb.Collection("Users").Document(user.Id);
+            var userDoc = _firestoreDb.Collection("users").Document(user.Id);
 
             await userDoc.SetAsync(user);
         }
@@ -219,7 +219,7 @@ namespace LOLA_SERVER.API.Services.Users
 
         private async Task SaveServiceToFirestore(Service service)
         {
-            var serviceDoc = _firestoreDb.Collection("Services").Document(service.Id);
+            var serviceDoc = _firestoreDb.Collection("services").Document(service.Id);
             await serviceDoc.SetAsync(service);
         }
 

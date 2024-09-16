@@ -60,7 +60,7 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
-                var topic = $"{city}/";
+                var topic = $"{city}-";
 
                 await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
 
@@ -102,7 +102,7 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
-                var topic = $"client/{clientId}";
+                var topic = $"client-{clientId}";
 
                 await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
 
@@ -131,7 +131,7 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             {
                 foreach (var userId in request.UserIds)
                 {
-                    var topic = $"client/{userId}";
+                    var topic = $"client-{userId}";
                     try
                     {
                         await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, senderId);
