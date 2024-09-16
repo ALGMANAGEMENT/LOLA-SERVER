@@ -31,5 +31,11 @@ namespace LOLA_SERVER.API.Models.Notifications
 
         [FirestoreProperty]
         public List<string> Topics { get; set; }
+
+        [FirestoreProperty]
+        public List<string> Recipients { get; set; }
+
+        [FirestoreProperty]
+        public string Title { get; set; }
     }
 }

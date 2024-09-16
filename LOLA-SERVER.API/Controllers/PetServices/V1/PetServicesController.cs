@@ -67,12 +67,15 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
                 {
                     string title = nearbyCaregiverRequest.NotificationData.Title ?? "New Pet Service Request";
                     string body = nearbyCaregiverRequest.NotificationData.Body ?? "A new pet service request is available near you!";
-
+                    List<string> recipients = new List<string>();
+       
                     foreach (var topic in topics)
                     {
                         try
                         {
-                            await _firebaseMessagingService.SendNotificationToTopicAsync(title, body, topic, senderUser);
+                            var userId= topic.Split('-').Last();
+                            recipients.Add(userId);
+                            await _firebaseMessagingService.SendNotificationToTopicAsync(title, body, topic, senderUser, recipients);
                         }
                         catch (Exception ex)
                         {
