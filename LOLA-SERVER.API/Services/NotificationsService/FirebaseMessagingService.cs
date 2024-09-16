@@ -75,14 +75,16 @@ namespace LOLA_SERVER.API.Services.MessagingService
                 Type = "Individual",
                 TypeNotification = "General",
                 User = userId,
-                Topics = new List<string>() // No hay tópicos en una notificación a un token específico
+                Topics = new List<string>(),
+                Recipients = new List<string>() { "ALL" },
+                Title = title,
             });
         }
 
         /// <summary>
         /// Envía una notificación a un tópico específico y almacena la notificación en Firestore.
         /// </summary>
-        public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId)
+        public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId, List<string> recipients )
         {
 
             try
@@ -120,7 +122,9 @@ namespace LOLA_SERVER.API.Services.MessagingService
                     Type = "Topic",
                     TypeNotification = "General",
                     User = userId,
-                    Topics = new List<string>(topicsArray)
+                    Topics = new List<string>(topicsArray),
+                    Title = title,
+                    Recipients = recipients
                 });
             }
             catch (GoogleApiException gex)

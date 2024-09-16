@@ -60,9 +60,10 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
-                var topic = $"{city}-";
-
-                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
+                var topic = $"{city}";
+                List<string> recipients = new List<string>();
+                recipients.Add(topic);
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId, recipients);
 
                 return ApiResponse("Notificación enviada a cuidadores en la ciudad exitosamente.");
             }
@@ -81,9 +82,11 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             try
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
-                var topic = "admin";
 
-                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
+                var topic = "admin";
+                List<string> recipients = new List<string>();
+                recipients.Add(topic);
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId, recipients);
 
                 return ApiResponse("Notificación enviada a administradores exitosamente.");
             }
@@ -103,8 +106,9 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             {
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
                 var topic = $"client-{clientId}";
-
-                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId);
+                List<string> recipients = new List<string>();
+                recipients.Add(topic);
+                await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId, recipients);
 
                 return ApiResponse("Notificación enviada al cliente exitosamente.");
             }
@@ -126,15 +130,17 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
             var successCount = 0;
             var failureCount = 0;
             var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+            List<string> recipients = new List<string>();
 
             try
             {
                 foreach (var userId in request.UserIds)
                 {
                     var topic = $"client-{userId}";
+                    recipients.Add(userId);
                     try
                     {
-                        await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, senderId);
+                        await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, senderId, recipients);
                         successCount++;
                     }
                     catch (Exception)
