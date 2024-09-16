@@ -107,7 +107,7 @@ namespace LOLA_SERVER.API.Controllers.Notifications.v1
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "test";
                 var topic = $"client-{clientId}";
                 List<string> recipients = new List<string>();
-                recipients.Add(topic);
+                recipients.Add(clientId);
                 await _firebaseMessagingService.SendNotificationToTopicAsync(request.Title, request.Body, topic, userId, recipients);
 
                 return ApiResponse("Notificación enviada al cliente exitosamente.");
