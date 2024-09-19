@@ -121,7 +121,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             if (userDoc.Exists)
             {
                 var userData = userDoc.ToDictionary();
-                if (userData.TryGetValue("UserType", out object userTypeObj) &&
+                if (userData.TryGetValue("userType", out object userTypeObj) &&
                     userTypeObj.ToString().Equals("care", StringComparison.OrdinalIgnoreCase))
                 {
                     if (userData.ContainsKey("Ubication"))
