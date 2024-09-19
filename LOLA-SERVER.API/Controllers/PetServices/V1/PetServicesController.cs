@@ -94,7 +94,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
             catch (Exception ex)
             {
                 // Log the exception
-                return ApiResponseServerError("An error occurred while processing your request");
+                return ApiResponseServerError($"An error occurred while processing your request {ex}");
             }
         }
     }
