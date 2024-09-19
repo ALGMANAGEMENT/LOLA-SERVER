@@ -152,17 +152,17 @@ namespace LOLA_SERVER.API.Services.Users
         {
             return new Service
             {
-                Id = Guid.NewGuid().ToString("N"),
-                Active = _random.Next(2) == 0,
-                IdUser = userId,
-                Location = GenerateRandomUbication(),
-                RecoveryPets = _random.Next(2) == 0,
-                ServiceSelected = _random.Next(2) == 0 ? "GUARDERIA" : "PELUQUERIA",
-                SizePets = GenerateRandomSizePets(),
-                TimeHavePets = GenerateRandomTimeHavePets(),
-                TypePetsCare = GenerateRandomTypePetsCare(),
-                TypeofServicesGrooming = GenerateRandomTypeofServicesGrooming(),
-                ValueService = GenerateRandomValueService()
+                id = Guid.NewGuid().ToString("N"),
+                active = _random.Next(2) == 0,
+                idUser = userId,
+                location = GenerateRandomUbication(),
+                recoveryPets = _random.Next(2) == 0,
+                serviceSelected = _random.Next(2) == 0 ? "GUARDERIA" : "PELUQUERIA",
+                sizePets = GenerateRandomSizePets(),
+                timeHavePets = GenerateRandomTimeHavePets(),
+                typePetsCare = GenerateRandomTypePetsCare(),
+                typeofServicesGrooming = GenerateRandomTypeofServicesGrooming(),
+                valueService = GenerateRandomValueService()
             };
         }
 
@@ -219,7 +219,7 @@ namespace LOLA_SERVER.API.Services.Users
 
         private async Task SaveServiceToFirestore(Service service)
         {
-            var serviceDoc = _firestoreDb.Collection("services").Document(service.Id);
+            var serviceDoc = _firestoreDb.Collection("services").Document(service.id);
             await serviceDoc.SetAsync(service);
         }
 

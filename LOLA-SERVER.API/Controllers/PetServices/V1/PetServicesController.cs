@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.PetServices.V1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/pet-service")]
     [ApiController]
     [Produces("application/json")]
@@ -94,7 +94,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
             catch (Exception ex)
             {
                 // Log the exception
-                return ApiResponseServerError($"An error occurred while processing your request {ex}");
+                return ApiResponseServerError($"An error occurred while processing your request: {ex}");
             }
         }
     }

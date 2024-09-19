@@ -6,36 +6,36 @@ namespace LOLA_SERVER.API.Models.Users
     public class Service
     {
         [FirestoreProperty]
-        public string Id { get; set; }
+        public string id { get; set; }
 
         [FirestoreProperty]
-        public bool Active { get; set; }
+        public bool active { get; set; }
 
         [FirestoreProperty]
-        public string IdUser { get; set; }
+        public string idUser { get; set; }
 
         [FirestoreProperty]
-        public Dictionary<string, object> Location { get; set; }
+        public Dictionary<string, object> location { get; set; }
 
         [FirestoreProperty]
-        public bool RecoveryPets { get; set; }
+        public bool recoveryPets { get; set; }
 
         [FirestoreProperty]
-        public string ServiceSelected { get; set; }
+        public string serviceSelected { get; set; }
 
         [FirestoreProperty]
-        public List<string> SizePets { get; set; }
+        public List<string> sizePets { get; set; }
 
         [FirestoreProperty]
-        public string TimeHavePets { get; set; }
+        public string timeHavePets { get; set; }
 
         [FirestoreProperty]
-        public List<string> TypePetsCare { get; set; }
+        public List<string> typePetsCare { get; set; }
 
         [FirestoreProperty]
-        public List<Dictionary<string, string>> TypeofServicesGrooming { get; set; }
+        public List<Dictionary<string, string>> typeofServicesGrooming { get; set; }
 
         [FirestoreProperty]
-        public string ValueService { get; set; }
+        public string valueService { get; set; }
     }
 }

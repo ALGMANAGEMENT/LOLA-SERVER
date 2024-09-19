@@ -37,7 +37,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             var typeService = typeServiceSnapshot.ConvertTo<TypeService>();
             var typeServiceRequired = typeService.value;
             var servicesCollection = _firestoreDb.Collection("services");
-            var servicesQuery = servicesCollection.WhereEqualTo("ServiceSelected", typeServiceRequired);
+            var servicesQuery = servicesCollection.WhereEqualTo("serviceSelected", typeServiceRequired);
             var servicesSnapshot = await servicesQuery.GetSnapshotAsync();
             var bookingSnapshot = await _firestoreDb.Collection("bookings").Document(BookingId).GetSnapshotAsync();
             var booking = bookingSnapshot.ConvertTo<Booking>();
@@ -52,15 +52,15 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                 foreach (var document in servicesSnapshot.Documents)
                 {
                     var service = document.ConvertTo<Service>();
-                    if (service.Location != null &&
-                        service.Location.TryGetValue("city", out object serviceCity) &&
+                    if (service.location != null &&
+                        service.location.TryGetValue("city", out object serviceCity) &&
                         serviceCity.ToString().Equals(city, StringComparison.OrdinalIgnoreCase))
                     {
-                        var caregiver = await GetCaregiverFromUser(service.IdUser);
+                        var caregiver = await GetCaregiverFromUser(service.idUser);
                         if (caregiver != null)
                         {
                             nearbyCaregivers.Add(caregiver);
-                            string topic = $"petservice-newrequest-care-{service.IdUser}";
+                            string topic = $"petservice-newrequest-care-{service.idUser}";
                             topics.Add(topic);
                         }
                     }
@@ -72,8 +72,8 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                 foreach (var document in servicesSnapshot.Documents)
                 {
                     var service = document.ConvertTo<Service>();
-                    if (service.Location != null &&
-                        service.Location.TryGetValue("coordinates", out object coordinatesObj) &&
+                    if (service.location != null &&
+                        service.location.TryGetValue("coordinates", out object coordinatesObj) &&
                         coordinatesObj is Dictionary<string, object> serviceCoordinates)
                     {
                         if (serviceCoordinates.TryGetValue("latitude", out object latObj) &&
@@ -86,11 +86,11 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                             };
                             if (IsWithinRadius(coordinates, serviceCoords, radiusKm))
                             {
-                                var caregiver = await GetCaregiverFromUser(service.IdUser);
+                                var caregiver = await GetCaregiverFromUser(service.idUser);
                                 if (caregiver != null)
                                 {
                                     nearbyCaregivers.Add(caregiver);
-                                    string topic = $"petservice-newrequest-care-{service.IdUser}";
+                                    string topic = $"petservice-newrequest-care-{service.idUser}";
                                     topics.Add(topic);
                                 }
                             }
