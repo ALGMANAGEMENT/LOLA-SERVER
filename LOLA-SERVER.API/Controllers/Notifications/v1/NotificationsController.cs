@@ -9,7 +9,7 @@ using LOLA_SERVER.API.Services.MessagingService;
 
 namespace LOLA_SERVER.API.Controllers.Notifications.v1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/notifications")]
     [ApiController]
     public class NotificationsController : BaseController

@@ -52,10 +52,17 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                 foreach (var document in servicesSnapshot.Documents)
                 {
                     var service = document.ConvertTo<Service>();
-                    var caregiver = await GetCaregiverFromUser(service.IdUser);
-                    if (caregiver != null)
+                    if (service.Location != null &&
+                        service.Location.TryGetValue("city", out object serviceCity) &&
+                        serviceCity.ToString().Equals(city, StringComparison.OrdinalIgnoreCase))
                     {
-                        nearbyCaregivers.Add(caregiver);
+                        var caregiver = await GetCaregiverFromUser(service.IdUser);
+                        if (caregiver != null)
+                        {
+                            nearbyCaregivers.Add(caregiver);
+                            string topic = $"petservice-newrequest-care-{service.IdUser}";
+                            topics.Add(topic);
+                        }
                     }
                 }
             }

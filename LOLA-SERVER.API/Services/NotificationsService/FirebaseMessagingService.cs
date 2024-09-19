@@ -94,6 +94,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
                 formattedTopic = $"{formattedTopic}".ToLower();
                 var message = new Message
                 {
+                    
                     Topic = formattedTopic,
                     Notification = new Notification
                     {
@@ -111,7 +112,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
                 await request.ExecuteAsync();
 
                 // Almacenar la notificación en Firestore
-                var topicsArray = topic.Split('/');
+                var topicsArray = topic.Split('-');
                 await StoreNotificationAsync(new NotificationDBData
                 {
                     IdNotification = Guid.NewGuid().ToString(),
