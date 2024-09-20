@@ -124,9 +124,9 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                 if (userData.TryGetValue("userType", out object userTypeObj) &&
                     userTypeObj.ToString().Equals("care", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (userData.ContainsKey("Ubication"))
+                    if (userData.ContainsKey("ubication"))
                     {
-                        userData.Remove("Ubication");
+                        userData.Remove("ubication");
                     }
 
                     return Caregiver.FromDictionary(userId, userData);
