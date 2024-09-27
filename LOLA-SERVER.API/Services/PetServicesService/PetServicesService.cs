@@ -28,6 +28,87 @@ namespace LOLA_SERVER.API.Services.PetServicesService
 
         }
 
+
+        public async Task<(List<Caregiver> nearestCaregivers, List<Caregiver> nearCaregivers, List<Caregiver> cityCaregivers)>
+        FindNearbyCaregiversByDistance(Coordinates coordinates, string typeServiceId, string city)
+        {
+            var nearestCaregivers = new List<Caregiver>();  // Within 5 km
+            var nearCaregivers = new List<Caregiver>();     // Between 5 and 10 km
+            var cityCaregivers = new List<Caregiver>();     // Beyond 10 km but in the same city
+
+            var typeServiceSnapshot = await _firestoreDb.Collection("TypesServices").Document(typeServiceId).GetSnapshotAsync();
+            var typeService = typeServiceSnapshot.ConvertTo<TypeService>();
+            var typeServiceRequired = typeService.value;
+
+            var servicesCollection = _firestoreDb.Collection("services");
+            var servicesQuery = servicesCollection.WhereEqualTo("serviceSelected", typeServiceRequired);
+            var servicesSnapshot = await servicesQuery.GetSnapshotAsync();
+
+            foreach (var document in servicesSnapshot.Documents)
+            {
+                var service = document.ConvertTo<Service>();
+                if (service.location != null &&
+                    service.location.TryGetValue("coordinates", out object coordinatesObj) &&
+                    coordinatesObj is Dictionary<string, object> serviceCoordinates)
+                {
+                    if (serviceCoordinates.TryGetValue("latitude", out object latObj) &&
+                        serviceCoordinates.TryGetValue("longitude", out object lonObj))
+                    {
+                        var serviceCoords = new Coordinates
+                        {
+                            Latitude = Convert.ToDouble(latObj),
+                            Longitude = Convert.ToDouble(lonObj)
+                        };
+
+                        double distance = CalculateDistance(coordinates, serviceCoords);
+
+                        var caregiver = await GetCaregiverFromUser(service.idUser);
+                        if (caregiver != null)
+                        {
+                            if (distance <= 5)
+                            {
+                                nearestCaregivers.Add(caregiver);
+                            }
+                            else if (distance <= 10)
+                            {
+                                nearCaregivers.Add(caregiver);
+                            }
+                            else if (service.location.TryGetValue("city", out object serviceCity) &&
+                                     serviceCity.ToString().Equals(city, StringComparison.OrdinalIgnoreCase))
+                            {
+                                cityCaregivers.Add(caregiver);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (nearestCaregivers, nearCaregivers, cityCaregivers);
+        }
+
+        private double CalculateDistance(Coordinates pointA, Coordinates pointB)
+        {
+            const double EarthRadiusKm = 6371;
+
+            var latitudeA = DegreesToRadians(pointA.Latitude);
+            var longitudeA = DegreesToRadians(pointA.Longitude);
+            var latitudeB = DegreesToRadians(pointB.Latitude);
+            var longitudeB = DegreesToRadians(pointB.Longitude);
+
+            var deltaLatitude = latitudeB - latitudeA;
+            var deltaLongitude = longitudeB - longitudeA;
+
+            var haversineSquareHalf = Math.Sin(deltaLatitude / 2) * Math.Sin(deltaLatitude / 2) +
+                                      Math.Cos(latitudeA) * Math.Cos(latitudeB) *
+                                      Math.Sin(deltaLongitude / 2) * Math.Sin(deltaLongitude / 2);
+
+            var centralAngle = 2 * Math.Atan2(Math.Sqrt(haversineSquareHalf), Math.Sqrt(1 - haversineSquareHalf));
+
+            return EarthRadiusKm * centralAngle;
+        }
+
+
+
         public async Task<(List<Caregiver> nearbyCaregivers, List<string> topics)> FindNearbyCaregivers(NearbyCaregiverRequest nearbyCaregiverRequest,
             string senderUser, string searchRadioId, string city, string typeServiceId, string BookingId)
         {

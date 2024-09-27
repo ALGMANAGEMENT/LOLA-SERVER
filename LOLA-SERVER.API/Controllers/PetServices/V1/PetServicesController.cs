@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.PetServices.V1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/pet-service")]
     [ApiController]
     [Produces("application/json")]
@@ -97,5 +97,63 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
                 return ApiResponseServerError($"An error occurred while processing your request: {ex}");
             }
         }
+
+        [HttpGet("nearby-caregivers")]
+        public async Task<IActionResult> FindAllNearbyCaregivers(
+             [FromQuery] double latitude =0,
+            [FromQuery] double longitude=0,
+            [FromQuery] string typeServiceId = "xk4keuRmmN9mFhRYC48D",
+            [FromQuery] string city = "sogamoso")
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var coordinates = new Coordinates { Latitude = latitude, Longitude = longitude };
+            if (coordinates == null)
+            {
+                return BadRequest("Coordinates are required");
+            }
+            try
+            {
+                var (nearestCaregivers, nearCaregivers, cityCaregivers) = await _petServicesService.FindNearbyCaregiversByDistance(
+                    coordinates,
+                    typeServiceId,
+                    city
+                );
+
+                return Ok(new
+                {
+                    Message = "Caregivers found successfully.",
+                    NearestCaregivers = new
+                    {
+                        Count = nearestCaregivers.Count,
+                        Description = "Caregivers within 5 km",
+                        Caregivers = nearestCaregivers
+                    },
+                    NearCaregivers = new
+                    {
+                        Count = nearCaregivers.Count,
+                        Description = "Caregivers between 5 and 10 km",
+                        Caregivers = nearCaregivers
+                    },
+                    CityCaregivers = new
+                    {
+                        Count = cityCaregivers.Count,
+                        Description = $"Caregivers beyond 10 km but in {city}",
+                        Caregivers = cityCaregivers
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+            }
+        }
+
+
     }
 }
