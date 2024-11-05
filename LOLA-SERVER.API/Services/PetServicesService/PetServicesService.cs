@@ -110,7 +110,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
 
 
         public async Task<(List<Caregiver> nearbyCaregivers, List<string> topics)> FindNearbyCaregivers(NearbyCaregiverRequest nearbyCaregiverRequest,
-            string senderUser, string searchRadioId, string city, string typeServiceId, string BookingId)
+           string senderUser, string searchRadioId, string city, string typeServiceId, string BookingId)
         {
             var coordinates = nearbyCaregiverRequest.Coordinates;
             var radiusKm = await GetRadiusKmFromFirebase(searchRadioId);
@@ -122,10 +122,8 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             var servicesSnapshot = await servicesQuery.GetSnapshotAsync();
             var bookingSnapshot = await _firestoreDb.Collection("bookings").Document(BookingId).GetSnapshotAsync();
             var booking = bookingSnapshot.ConvertTo<Booking>();
-
             var nearbyCaregivers = new List<Caregiver>();
             var topics = new List<string>();
-
             if (radiusKm == 0)
             {
                 // Search in the entire city
@@ -153,12 +151,10 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                 foreach (var document in servicesSnapshot.Documents)
                 {
                     var service = document.ConvertTo<Service>();
-                    if (service.location != null &&
-                        service.location.TryGetValue("coordinates", out object coordinatesObj) &&
-                        coordinatesObj is Dictionary<string, object> serviceCoordinates)
+                    if (service.location != null)
                     {
-                        if (serviceCoordinates.TryGetValue("latitude", out object latObj) &&
-                            serviceCoordinates.TryGetValue("longitude", out object lonObj))
+                        if (service.location.TryGetValue("latitude", out object latObj) &&
+                            service.location.TryGetValue("longitude", out object lonObj))
                         {
                             var serviceCoords = new Coordinates
                             {
@@ -179,8 +175,6 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                     }
                 }
             }
-
-
             foreach (var caregiver in nearbyCaregivers)
             {
                 if (!booking.UrlCares.Contains(caregiver.Id))
@@ -188,11 +182,8 @@ namespace LOLA_SERVER.API.Services.PetServicesService
                     booking.UrlCares.Add(caregiver.Id);
                 }
             }
-
             // Update the booking document in Firestore
             await _firestoreDb.Collection("bookings").Document(BookingId).SetAsync(booking, SetOptions.MergeAll);
-
-
             return (nearbyCaregivers, topics);
         }
 

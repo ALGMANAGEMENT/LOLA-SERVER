@@ -9,6 +9,7 @@ using LOLA_SERVER.API.Models.Notifications;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Google.Api.ResourceDescriptor.Types;
 
 namespace LOLA_SERVER.API.Services.MessagingService
 {
@@ -87,6 +88,17 @@ namespace LOLA_SERVER.API.Services.MessagingService
         public async Task SendNotificationToTopicAsync(string title, string body, string topic, string userId, List<string> recipients )
         {
 
+            var style = new NotificationStyle
+            {
+                Icon = "ic_notification",
+                Color = "#FF5733",
+                Sound = "notification_sound",
+                ChannelId = "default_channel",
+                Badge = 1,
+                Image = "https://media.istockphoto.com/id/1186734274/vector/vector-image-of-dog-and-cat-logo-on-white.jpg?s=612x612&w=0&k=20&c=p_wU6nJyvY_31FlX4MSo8MMH1hBHcFo5HxutZccwL4c=",
+                BigText = "Este es un texto más largo que se mostrará cuando la notificación se expanda.",
+                SubText = "Información adicional"
+            };
             try
             {
                 var formattedTopic = topic.Trim('/');
@@ -100,6 +112,22 @@ namespace LOLA_SERVER.API.Services.MessagingService
                     {
                         Title = title,
                         Body = body
+                    },
+                    Android = new AndroidConfig
+                    {
+                        Notification = new AndroidNotification
+                        {
+                            Icon = style.Icon,
+                            Color = style.Color,
+                            Sound = style.Sound,
+                            ChannelId = style.ChannelId
+                        }
+                    },
+                    Data = new Dictionary<string, string>
+                    {
+                        { "image", style.Image },
+                        { "bigText", style.BigText },
+                        { "subText", style.SubText }
                     }
                 };
 
@@ -108,6 +136,8 @@ namespace LOLA_SERVER.API.Services.MessagingService
                     Message = message
                 };
 
+                
+                await SendDemoNotification(formattedTopic);
                 var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
                 await request.ExecuteAsync();
 
@@ -144,8 +174,67 @@ namespace LOLA_SERVER.API.Services.MessagingService
         }
 
 
+        private async Task SendDemoNotification(string topic)
+        {
+            var demoStyle = new NotificationStyle
+            {
+                Icon = "ic_demo_notification",
+                Color = "#4CAF50",
+                Sound = "demo_sound",
+                ChannelId = "demo_channel",
+                Badge = 2,
+                Image = "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
+                BigText = "Esta es una notificación de demostración con texto expandible. Muestra cómo puedes incluir más contenido en tu notificación.",
+                SubText = "Demo Notification"
+            };
+
+            var demoMessage = new Message
+            {
+                Topic = topic,
+                Notification = new Notification
+                {
+                    Title = "Demo: Nueva Actualización",
+                    Body = "¡Descubre las nuevas funciones de nuestra app!"
+                },
+                Android = new AndroidConfig
+                {
+                    Notification = new AndroidNotification
+                    {
+                        Icon = demoStyle.Icon,
+                        Color = demoStyle.Color,
+                        Sound = demoStyle.Sound,
+                        ChannelId = demoStyle.ChannelId,
+                        ClickAction = "OPEN_DEMO_ACTIVITY"
+                    }
+                },
+                Data = new Dictionary<string, string>
+                {
+                    { "type", "demo" },
+                    { "image", demoStyle.Image },
+                    { "bigText", demoStyle.BigText },
+                    { "subText", demoStyle.SubText },
+                    { "actionButton1", "Ver Ahora" },
+                    { "actionButton2", "Recordar Más Tarde" }
+                }
+            };
+
+            var sendMessageRequest = new SendMessageRequest
+            {
+                Message = demoMessage
+            };
+            
+            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+            await request.ExecuteAsync();
+           
+        }
 
 
+        private string FormatTopic(string topic)
+        {
+            var formattedTopic = topic.Trim('/');
+            formattedTopic = formattedTopic.StartsWith("topics-") ? formattedTopic : $"topics-{formattedTopic}";
+            return $"{formattedTopic}".ToLower();
+        }
 
         /// <summary>
         /// Almacena la notificación en Firestore.
