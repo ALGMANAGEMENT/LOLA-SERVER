@@ -30,7 +30,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
 
 
         public async Task<(List<Caregiver> nearestCaregivers, List<Caregiver> nearCaregivers, List<Caregiver> cityCaregivers)>
-        FindNearbyCaregiversByDistance(Coordinates coordinates, string typeServiceId, string city)
+     FindNearbyCaregiversByDistance(Coordinates coordinates, string typeServiceId, string city)
         {
             var nearestCaregivers = new List<Caregiver>();  // Within 5 km
             var nearCaregivers = new List<Caregiver>();     // Between 5 and 10 km
@@ -47,22 +47,33 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             foreach (var document in servicesSnapshot.Documents)
             {
                 var service = document.ConvertTo<Service>();
-                if (service.location != null &&
-                    service.location.TryGetValue("coordinates", out object coordinatesObj) &&
-                    coordinatesObj is Dictionary<string, object> serviceCoordinates)
+                if (service.location != null)
                 {
-                    if (serviceCoordinates.TryGetValue("latitude", out object latObj) &&
-                        serviceCoordinates.TryGetValue("longitude", out object lonObj))
+                    // Direct access to latitude and longitude within location
+                    double? latitude = null;
+                    double? longitude = null;
+
+                    // Try to get latitude and longitude directly from location
+                    if (service.location.TryGetValue("latitude", out object latObj))
+                    {
+                        latitude = Convert.ToDouble(latObj);
+                    }
+                    if (service.location.TryGetValue("longitude", out object lonObj))
+                    {
+                        longitude = Convert.ToDouble(lonObj);
+                    }
+
+                    if (latitude.HasValue && longitude.HasValue)
                     {
                         var serviceCoords = new Coordinates
                         {
-                            Latitude = Convert.ToDouble(latObj),
-                            Longitude = Convert.ToDouble(lonObj)
+                            Latitude = latitude.Value,
+                            Longitude = longitude.Value
                         };
 
                         double distance = CalculateDistance(coordinates, serviceCoords);
-
                         var caregiver = await GetCaregiverFromUser(service.idUser);
+
                         if (caregiver != null)
                         {
                             if (distance <= 5)
@@ -177,9 +188,9 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             }
             foreach (var caregiver in nearbyCaregivers)
             {
-                if (!booking.UrlCares.Contains(caregiver.Id))
+                if (!booking.UrlCares.Contains(caregiver.id))
                 {
-                    booking.UrlCares.Add(caregiver.Id);
+                    booking.UrlCares.Add(caregiver.id);
                 }
             }
             // Update the booking document in Firestore
