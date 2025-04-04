@@ -28,6 +28,9 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "LOLA.API": {
+      "commandName": "IIS"
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json",
