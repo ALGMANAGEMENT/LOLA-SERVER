@@ -24,7 +24,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
             {
                 Credential = credential
             };
-            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
+            _firestoreDb = FirestoreDb.Create("lola-manager", builder.Build());
 
         }
 

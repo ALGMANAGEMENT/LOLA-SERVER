@@ -34,7 +34,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
             {
                 Credential = credential
             };
-            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
+            _firestoreDb = FirestoreDb.Create("lola-manager", builder.Build());
         }
 
 
@@ -62,7 +62,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
                 Message = message
             };
 
-            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-manager");
             await request.ExecuteAsync();
 
             // Almacenar la notificación en Firestore
@@ -138,7 +138,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
 
                 
                 await SendDemoNotification(formattedTopic);
-                var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+                var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-manager");
                 await request.ExecuteAsync();
 
                 // Almacenar la notificación en Firestore
@@ -223,7 +223,7 @@ namespace LOLA_SERVER.API.Services.MessagingService
                 Message = demoMessage
             };
             
-            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-app-e5f71");
+            var request = _firebaseMessagingService.Projects.Messages.Send(sendMessageRequest, "projects/lola-manager");
             await request.ExecuteAsync();
            
         }

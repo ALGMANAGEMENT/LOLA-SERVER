@@ -14,7 +14,7 @@ namespace LOLA_SERVER.API.Services
     public class ImageService : IImageService
     {
         private readonly StorageClient _storageClient;
-        private readonly string _bucketName = "lola-app-e5f71.appspot.com";
+        private readonly string _bucketName = "lola-manager.appspot.com";
         private readonly FirestoreDb _firestoreDb;
 
         public ImageService()
@@ -26,7 +26,7 @@ namespace LOLA_SERVER.API.Services
             {
                 Credential = credential
             };
-            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
+            _firestoreDb = FirestoreDb.Create("lola-manager", builder.Build());
         }
 
         public async Task<List<string>> UploadImages(List<IFormFile> files, string folder, string userId)

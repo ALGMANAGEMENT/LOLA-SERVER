@@ -38,10 +38,37 @@ public class Startup
 
     private void InitializeFirebase()
     {
-        FirebaseApp.Create(new AppOptions
+        try
         {
-            Credential = GoogleCredential.FromFile("Utils/Credentials/Firebase-Credentials.json")
-        });
+            // Verificar si Firebase ya está inicializado
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                var projectId = Configuration["Firebase:ProjectId"] ?? "lola-manager";
+                var credentialPath = Configuration["Firebase:CredentialsPath"] ?? "Utils/Credentials/Firebase-Credentials.json";
+                
+                if (!File.Exists(credentialPath))
+                {
+                    throw new FileNotFoundException($"No se encontró el archivo de credenciales en: {credentialPath}");
+                }
+
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = GoogleCredential.FromFile(credentialPath),
+                    ProjectId = projectId
+                });
+                
+                Console.WriteLine($"Firebase inicializado exitosamente para el proyecto: {projectId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inicializando Firebase: {ex.Message}");
+            // En desarrollo, permitir que la aplicación continúe
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+            {
+                throw;
+            }
+        }
     }
 
     private void ConfigureAuthentication(IServiceCollection services)
@@ -50,21 +77,21 @@ public class Startup
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = "https://securetoken.google.com/lola-app-e5f71";
+                options.Authority = "https://securetoken.google.com/lola-manager";
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidIssuers = new[]
                     {
-                        "https://securetoken.google.com/lola-app-e5f71",
+                        "https://securetoken.google.com/lola-manager",
                         "https://accounts.google.com"
                     },
                     ValidateAudience = true,
                     ValidAudiences = new[]
                     {
-                        "lola-app-e5f71",
-                        "315094815894-bdc0b9hfq477eapk624l57lq9jji1001.apps.googleusercontent.com",
-                        "315094815894-ga563q20tj5kafbgo8ith2ljhm9pm2kk.apps.googleusercontent.com"
+                          "lola-manager",
+                        "358545804776-8givt8sn6ni9lb1taf18svjc5nov59jt.apps.googleusercontent.com",
+                        "358545804776-49en63dntddtsvaimgiujl26vm253f09.apps.googleusercontent.com"
                     },
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero // Reduce la tolerancia predeterminada en el tiempo de expiración del token

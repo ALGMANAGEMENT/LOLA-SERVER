@@ -21,7 +21,7 @@ namespace LOLA_SERVER.API.Services.Users
             {
                 Credential = credential
             };
-            _firestoreDb = FirestoreDb.Create("lola-app-e5f71", builder.Build());
+            _firestoreDb = FirestoreDb.Create("lola-manager", builder.Build());
         }
 
         public async Task<List<User>> GenerateAndSaveDummyUsers(int count, Coordinates coordinates)
