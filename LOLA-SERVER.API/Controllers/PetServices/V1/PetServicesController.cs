@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace LOLA_SERVER.API.Controllers.PetServices.V1
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v1/pet-service")]
     [ApiController]
     [Produces("application/json")]
