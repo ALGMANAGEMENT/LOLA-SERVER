@@ -16,7 +16,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
     //[Authorize]
     [Route("api/v1/pet-service")]
     [ApiController]
-    [Produces("application/json")]
+   
     public class PetServicesController : BaseController
     {
         private readonly IPetServicesService _petServicesService;
