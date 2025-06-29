@@ -8,6 +8,10 @@ LOLA-SERVER.API/Utils/Credentials/Firebase-Credentials.json
 *.firebase-credentials.json
 firebase-service-account.json
 
+# Archivos de configuración con credenciales sensibles
+appsettings.json
+**/appsettings.json
+
 .vscode/
 .idea/
 *.suo
@@ -33,7 +37,7 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
-# Archivos de publicaci�n
+# Archivos de publicación
 publish/
 
 
@@ -44,7 +48,7 @@ temp/
 logs/
 
 
-# Archivos espec�ficos de Firebase
+# Archivos específicos de Firebase
 firebase-debug.log
 .firebaserc
 .firebase/
@@ -53,7 +57,7 @@ firebase-debug.log
 firebase.json
 storage.rules
 
-# Archivos de configuraci�n del sistema operativo
+# Archivos de configuración del sistema operativo
 .DS_Store
 Thumbs.db
 /.vs/ProjectEvaluation
