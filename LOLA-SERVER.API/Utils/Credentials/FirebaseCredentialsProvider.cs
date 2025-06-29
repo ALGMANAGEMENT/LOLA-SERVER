@@ -26,10 +26,12 @@ namespace LOLA_SERVER.API.Utils.Credentials
             
             if (!string.IsNullOrEmpty(firebaseCredentialsJson))
             {
+                Console.WriteLine("Intentando usar credenciales desde variable de entorno FIREBASE_CREDENTIALS_JSON");
                 try
                 {
                     // Procesar el JSON para corregir el formato de la clave privada
                     var processedJson = ProcessFirebaseCredentialsJson(firebaseCredentialsJson);
+                    Console.WriteLine("Credenciales procesadas exitosamente desde variable de entorno");
                     return GoogleCredential.FromJson(processedJson);
                 }
                 catch (Exception ex)
@@ -39,6 +41,7 @@ namespace LOLA_SERVER.API.Utils.Credentials
                     // Intentar con el JSON original como fallback
                     try
                     {
+                        Console.WriteLine("Intentando con JSON original como fallback...");
                         return GoogleCredential.FromJson(firebaseCredentialsJson);
                     }
                     catch (Exception originalEx)
@@ -47,35 +50,53 @@ namespace LOLA_SERVER.API.Utils.Credentials
                     }
                 }
             }
+            else
+            {
+                Console.WriteLine("Variable de entorno FIREBASE_CREDENTIALS_JSON no encontrada");
+            }
 
             // Intentar crear credenciales desde la configuración (appsettings.json)
             try
             {
+                Console.WriteLine("Intentando crear credenciales desde configuración appsettings.json");
                 var firebaseSection = configuration.GetSection("Firebase");
                 if (firebaseSection.Exists())
                 {
                     var credentialsJson = CreateJsonFromConfiguration(firebaseSection);
                     if (!string.IsNullOrEmpty(credentialsJson))
                     {
+                        Console.WriteLine("Credenciales creadas exitosamente desde configuración");
                         return GoogleCredential.FromJson(credentialsJson);
                     }
+                    else
+                    {
+                        Console.WriteLine("No se pudieron crear credenciales desde configuración - campos requeridos faltantes");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Sección Firebase no encontrada en configuración");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al crear credenciales desde configuración: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
 
             // Fallback: usar archivo de credenciales
             var credentialPath = configuration["Firebase:CredentialsPath"] ?? "Utils/Credentials/Firebase-Credentials.json";
+            Console.WriteLine($"Intentando usar archivo de credenciales: {credentialPath}");
             
             if (!File.Exists(credentialPath))
             {
+                Console.WriteLine($"Archivo de credenciales no encontrado: {credentialPath}");
                 throw new FileNotFoundException($"No se encontraron credenciales de Firebase. " +
                     $"Configura las credenciales en appsettings.json, proporciona FIREBASE_CREDENTIALS_JSON como variable de entorno, " +
                     $"o asegúrate de que el archivo existe en: {credentialPath}");
             }
 
+            Console.WriteLine("Usando archivo de credenciales como fallback");
             return GoogleCredential.FromFile(credentialPath);
         }
 
@@ -83,6 +104,7 @@ namespace LOLA_SERVER.API.Utils.Credentials
         {
             try
             {
+                Console.WriteLine("Procesando JSON de credenciales Firebase...");
                 using (JsonDocument document = JsonDocument.Parse(credentialsJson))
                 {
                     var root = document.RootElement;
@@ -95,7 +117,10 @@ namespace LOLA_SERVER.API.Utils.Credentials
                         if (property.Name == "private_key" && property.Value.ValueKind == JsonValueKind.String)
                         {
                             var privateKey = property.Value.GetString();
-                            processedCredentials[property.Name] = ProcessPrivateKey(privateKey);
+                            Console.WriteLine($"Procesando clave privada (longitud: {privateKey?.Length})");
+                            var processedKey = ProcessPrivateKey(privateKey);
+                            processedCredentials[property.Name] = processedKey;
+                            Console.WriteLine("Clave privada procesada exitosamente");
                         }
                         else
                         {
@@ -124,19 +149,36 @@ namespace LOLA_SERVER.API.Utils.Credentials
         private static string ProcessPrivateKey(string privateKey)
         {
             if (string.IsNullOrEmpty(privateKey))
+            {
+                Console.WriteLine("Clave privada está vacía o es null");
                 return privateKey;
+            }
 
-            // Manejar doble escape primero (\\n -> \n)
-            string processedKey = privateKey.Replace("\\\\n", "\n");
+            Console.WriteLine($"Procesando clave privada original (longitud: {privateKey.Length})");
+            Console.WriteLine($"Primeros 100 caracteres: {privateKey.Substring(0, Math.Min(100, privateKey.Length))}");
+
+            // Manejar múltiples niveles de escape
+            string processedKey = privateKey;
             
-            // Luego manejar escape simple (\n -> salto de línea real)
+            // Manejar triple escape (\\\n -> \\n -> \n -> salto de línea)
+            processedKey = processedKey.Replace("\\\\\\n", "\n");
+            
+            // Manejar doble escape (\\n -> \n)
+            processedKey = processedKey.Replace("\\\\n", "\n");
+            
+            // Manejar escape simple (\n -> salto de línea real)
             processedKey = processedKey.Replace("\\n", "\n");
+            
+            // Limpiar espacios al inicio y final
+            processedKey = processedKey.Trim();
+            
+            Console.WriteLine($"Después del procesamiento de escapes (longitud: {processedKey.Length})");
+            Console.WriteLine($"Primeros 100 caracteres procesados: {processedKey.Substring(0, Math.Min(100, processedKey.Length))}");
             
             // Verificar si ya tiene los headers correctos
             if (!processedKey.Contains("-----BEGIN PRIVATE KEY-----"))
             {
-                // Si no tiene headers, agregarlos
-                processedKey = processedKey.Trim();
+                Console.WriteLine("La clave no tiene headers, agregándolos...");
                 
                 // Remover headers existentes si los hay (por si acaso)
                 processedKey = processedKey
@@ -149,6 +191,21 @@ namespace LOLA_SERVER.API.Utils.Credentials
                 // Agregar los headers correctos
                 processedKey = $"-----BEGIN PRIVATE KEY-----\n{processedKey}\n-----END PRIVATE KEY-----";
             }
+            else
+            {
+                Console.WriteLine("La clave ya tiene headers correctos");
+                
+                // Asegurar que los saltos de línea estén correctos
+                if (!processedKey.Contains("\n") && processedKey.Contains("\\n"))
+                {
+                    Console.WriteLine("Corrigiendo saltos de línea restantes...");
+                    processedKey = processedKey.Replace("\\n", "\n");
+                }
+            }
+            
+            Console.WriteLine($"Clave privada final (longitud: {processedKey.Length})");
+            Console.WriteLine($"Empieza con: {processedKey.Substring(0, Math.Min(50, processedKey.Length))}");
+            Console.WriteLine($"Termina con: {processedKey.Substring(Math.Max(0, processedKey.Length - 50))}");
             
             return processedKey;
         }
@@ -157,6 +214,8 @@ namespace LOLA_SERVER.API.Utils.Credentials
         {
             try
             {
+                Console.WriteLine("Creando JSON desde configuración appsettings...");
+                
                 // Crear el objeto de credenciales usando exactamente los nombres del appsettings.json
                 var credentials = new
                 {
@@ -174,19 +233,42 @@ namespace LOLA_SERVER.API.Utils.Credentials
                 };
 
                 // Verificar que las propiedades esenciales estén presentes
-                if (string.IsNullOrEmpty(credentials.type) || 
-                    string.IsNullOrEmpty(credentials.project_id) || 
-                    string.IsNullOrEmpty(credentials.private_key) || 
-                    string.IsNullOrEmpty(credentials.client_email))
+                var missingFields = new List<string>();
+                if (string.IsNullOrEmpty(credentials.type)) missingFields.Add("type");
+                if (string.IsNullOrEmpty(credentials.project_id)) missingFields.Add("project_id");
+                if (string.IsNullOrEmpty(credentials.private_key)) missingFields.Add("private_key");
+                if (string.IsNullOrEmpty(credentials.client_email)) missingFields.Add("client_email");
+
+                if (missingFields.Any())
                 {
+                    Console.WriteLine($"Campos requeridos faltantes en configuración: {string.Join(", ", missingFields)}");
                     return null;
                 }
 
-                return JsonSerializer.Serialize(credentials);
+                // Procesar la clave privada si está presente
+                var processedCredentials = new Dictionary<string, object>
+                {
+                    ["type"] = credentials.type,
+                    ["project_id"] = credentials.project_id,
+                    ["private_key_id"] = credentials.private_key_id,
+                    ["private_key"] = ProcessPrivateKey(credentials.private_key),
+                    ["client_email"] = credentials.client_email,
+                    ["client_id"] = credentials.client_id,
+                    ["auth_uri"] = credentials.auth_uri,
+                    ["token_uri"] = credentials.token_uri,
+                    ["auth_provider_x509_cert_url"] = credentials.auth_provider_x509_cert_url,
+                    ["client_x509_cert_url"] = credentials.client_x509_cert_url,
+                    ["universe_domain"] = credentials.universe_domain
+                };
+
+                var json = JsonSerializer.Serialize(processedCredentials);
+                Console.WriteLine("JSON de credenciales creado exitosamente desde configuración");
+                return json;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al serializar credenciales desde configuración: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return null;
             }
         }
