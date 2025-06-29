@@ -126,8 +126,11 @@ namespace LOLA_SERVER.API.Utils.Credentials
             if (string.IsNullOrEmpty(privateKey))
                 return privateKey;
 
-            // Reemplazar \n con saltos de línea reales
-            string processedKey = privateKey.Replace("\\n", "\n");
+            // Manejar doble escape primero (\\n -> \n)
+            string processedKey = privateKey.Replace("\\\\n", "\n");
+            
+            // Luego manejar escape simple (\n -> salto de línea real)
+            processedKey = processedKey.Replace("\\n", "\n");
             
             // Verificar si ya tiene los headers correctos
             if (!processedKey.Contains("-----BEGIN PRIVATE KEY-----"))
