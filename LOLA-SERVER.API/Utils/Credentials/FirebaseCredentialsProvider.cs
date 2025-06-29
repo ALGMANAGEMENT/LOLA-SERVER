@@ -1,5 +1,6 @@
 using Google.Apis.Auth.OAuth2;
 using LOLA_SERVER.API.Interfaces.Services;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace LOLA_SERVER.API.Utils.Credentials
@@ -27,11 +28,23 @@ namespace LOLA_SERVER.API.Utils.Credentials
             {
                 try
                 {
-                    return GoogleCredential.FromJson(firebaseCredentialsJson);
+                    // Procesar el JSON para corregir el formato de la clave privada
+                    var processedJson = ProcessFirebaseCredentialsJson(firebaseCredentialsJson);
+                    return GoogleCredential.FromJson(processedJson);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error al crear credenciales desde variable de entorno: {ex.Message}");
+                    
+                    // Intentar con el JSON original como fallback
+                    try
+                    {
+                        return GoogleCredential.FromJson(firebaseCredentialsJson);
+                    }
+                    catch (Exception originalEx)
+                    {
+                        Console.WriteLine($"Error también con JSON original: {originalEx.Message}");
+                    }
                 }
             }
 
@@ -64,6 +77,77 @@ namespace LOLA_SERVER.API.Utils.Credentials
             }
 
             return GoogleCredential.FromFile(credentialPath);
+        }
+
+        private static string ProcessFirebaseCredentialsJson(string credentialsJson)
+        {
+            try
+            {
+                using (JsonDocument document = JsonDocument.Parse(credentialsJson))
+                {
+                    var root = document.RootElement;
+                    
+                    // Crear un nuevo objeto con la clave privada procesada
+                    var processedCredentials = new Dictionary<string, object>();
+                    
+                    foreach (var property in root.EnumerateObject())
+                    {
+                        if (property.Name == "private_key" && property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            var privateKey = property.Value.GetString();
+                            processedCredentials[property.Name] = ProcessPrivateKey(privateKey);
+                        }
+                        else
+                        {
+                            processedCredentials[property.Name] = property.Value.ValueKind switch
+                            {
+                                JsonValueKind.String => property.Value.GetString(),
+                                JsonValueKind.Number => property.Value.GetDecimal(),
+                                JsonValueKind.True => true,
+                                JsonValueKind.False => false,
+                                JsonValueKind.Null => null,
+                                _ => property.Value.GetRawText()
+                            };
+                        }
+                    }
+                    
+                    return JsonSerializer.Serialize(processedCredentials);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al procesar credenciales JSON: {ex.Message}");
+                return credentialsJson; // Retornar el original si falla el procesamiento
+            }
+        }
+
+        private static string ProcessPrivateKey(string privateKey)
+        {
+            if (string.IsNullOrEmpty(privateKey))
+                return privateKey;
+
+            // Reemplazar \n con saltos de línea reales
+            string processedKey = privateKey.Replace("\\n", "\n");
+            
+            // Verificar si ya tiene los headers correctos
+            if (!processedKey.Contains("-----BEGIN PRIVATE KEY-----"))
+            {
+                // Si no tiene headers, agregarlos
+                processedKey = processedKey.Trim();
+                
+                // Remover headers existentes si los hay (por si acaso)
+                processedKey = processedKey
+                    .Replace("-----BEGIN PRIVATE KEY-----", "")
+                    .Replace("-----END PRIVATE KEY-----", "")
+                    .Replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                    .Replace("-----END RSA PRIVATE KEY-----", "")
+                    .Trim();
+                
+                // Agregar los headers correctos
+                processedKey = $"-----BEGIN PRIVATE KEY-----\n{processedKey}\n-----END PRIVATE KEY-----";
+            }
+            
+            return processedKey;
         }
 
         private static string? CreateJsonFromConfiguration(IConfigurationSection firebaseSection)
