@@ -118,7 +118,7 @@ namespace LOLA_SERVER.API.Controllers.PetServices.V1
             }
             try
             {
-                var (nearestCaregivers, nearCaregivers, cityCaregivers) = await _petServicesService.FindNearbyCaregiversByDistance(
+                var (nearestCaregivers, nearCaregivers, cityCaregivers) = await _petServicesService.FindNearbyCaregiversDirectly(
                     coordinates,
                     typeServiceId,
                     city

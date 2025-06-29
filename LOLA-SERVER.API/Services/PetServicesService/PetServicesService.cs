@@ -233,7 +233,7 @@ namespace LOLA_SERVER.API.Services.PetServicesService
         private bool TryGetUserCoordinates(Dictionary<string, object> userData, out Coordinates coordinates)
         {
             coordinates = null;
-            if (userData.TryGetValue("Ubication", out object ubicationObj) &&
+            if (userData.TryGetValue("ubication", out object ubicationObj) &&
                 ubicationObj is Dictionary<string, object> ubication &&
                 ubication.TryGetValue("coordinates", out object coordinatesObj) &&
                 coordinatesObj is Dictionary<string, object> userCoordinates)
@@ -281,6 +281,63 @@ namespace LOLA_SERVER.API.Services.PetServicesService
         private double DegreesToRadians(double degrees)
         {
             return degrees * Math.PI / 180;
+        }
+
+        public async Task<(List<Caregiver> nearestCaregivers, List<Caregiver> nearCaregivers, List<Caregiver> cityCaregivers)>
+            FindNearbyCaregiversDirectly(Coordinates coordinates, string typeServiceId, string city)
+        {
+            var nearestCaregivers = new List<Caregiver>();  // Within 5 km
+            var nearCaregivers = new List<Caregiver>();     // Between 5 and 10 km
+            var cityCaregivers = new List<Caregiver>();     // Beyond 10 km but in the same city
+
+            // Buscar directamente en la colección de usuarios que son cuidadores
+            var usersCollection = _firestoreDb.Collection("users");
+            var caregiverQuery = usersCollection.WhereEqualTo("userType", "care");
+            var caregiverSnapshot = await caregiverQuery.GetSnapshotAsync();
+
+            foreach (var document in caregiverSnapshot.Documents)
+            {
+                var userData = document.ToDictionary();
+                
+                // Intentar obtener las coordenadas del usuario
+                if (TryGetUserCoordinates(userData, out Coordinates userCoordinates))
+                {
+                    double distance = CalculateDistance(coordinates, userCoordinates);
+                    var caregiver = Caregiver.FromDictionary(document.Id, userData);
+
+                    if (caregiver != null)
+                    {
+                        if (distance <= 5)
+                        {
+                            nearestCaregivers.Add(caregiver);
+                        }
+                        else if (distance <= 10)
+                        {
+                            nearCaregivers.Add(caregiver);
+                        }
+                        else if (TryGetUserCity(userData, out string userCity) &&
+                                 userCity.Equals(city, StringComparison.OrdinalIgnoreCase))
+                        {
+                            cityCaregivers.Add(caregiver);
+                        }
+                    }
+                }
+            }
+
+            return (nearestCaregivers, nearCaregivers, cityCaregivers);
+        }
+
+        private bool TryGetUserCity(Dictionary<string, object> userData, out string city)
+        {
+            city = null;
+            if (userData.TryGetValue("Ubication", out object ubicationObj) &&
+                ubicationObj is Dictionary<string, object> ubication &&
+                ubication.TryGetValue("city", out object cityObj))
+            {
+                city = cityObj.ToString();
+                return !string.IsNullOrEmpty(city);
+            }
+            return false;
         }
     }
 }
