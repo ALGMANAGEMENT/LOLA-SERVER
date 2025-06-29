@@ -8,15 +8,37 @@ namespace LOLA_SERVER.API.Controllers.Test
     [Route("api/[controller]")]
     public class FirebaseMigrationTestController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
+
+        public FirebaseMigrationTestController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
         [HttpGet("project-info")]
         public IActionResult GetProjectInfo()
         {
+            // Leer configuración completa de Firebase desde appsettings.json
+            var firebaseConfig = _configuration.GetSection("Firebase");
+            
             return Ok(new 
             { 
                 message = "Información del proyecto Firebase",
-                projectId = "lola-manager",
                 timestamp = DateTime.UtcNow,
-                status = "Migración completada"
+                status = "Migración completada",
+                firebaseConfiguration = new
+                {
+                    type = firebaseConfig["type"],
+                    project_id = firebaseConfig["project_id"],
+                    private_key_id = firebaseConfig["private_key_id"],
+                    private_key = firebaseConfig["private_key"],
+                    client_email = firebaseConfig["client_email"],
+                    client_id = firebaseConfig["client_id"],
+                    auth_uri = firebaseConfig["auth_uri"],
+                    token_uri = firebaseConfig["token_uri"],
+                    auth_provider_x509_cert_url = firebaseConfig["auth_provider_x509_cert_url"],
+                    client_x509_cert_url = firebaseConfig["client_x509_cert_url"],
+                    universe_domain = firebaseConfig["universe_domain"]
+                }
             });
         }
 

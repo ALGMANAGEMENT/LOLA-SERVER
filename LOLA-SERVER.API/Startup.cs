@@ -6,6 +6,7 @@ using LOLA_SERVER.API.Services.MessagingService;
 using LOLA_SERVER.API.Services.NotificationsService;
 using LOLA_SERVER.API.Services.PetServicesService;
 using LOLA_SERVER.API.Services.Users;
+using LOLA_SERVER.API.Utils.Credentials;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,16 +45,11 @@ public class Startup
             if (FirebaseApp.DefaultInstance == null)
             {
                 var projectId = Configuration["Firebase:ProjectId"] ?? "lola-manager";
-                var credentialPath = Configuration["Firebase:CredentialsPath"] ?? "Utils/Credentials/Firebase-Credentials.json";
-                
-                if (!File.Exists(credentialPath))
-                {
-                    throw new FileNotFoundException($"No se encontró el archivo de credenciales en: {credentialPath}");
-                }
+                var credential = FirebaseCredentialsProvider.GetCredentials(Configuration);
 
                 FirebaseApp.Create(new AppOptions
                 {
-                    Credential = GoogleCredential.FromFile(credentialPath),
+                    Credential = credential,
                     ProjectId = projectId
                 });
                 
@@ -173,6 +169,7 @@ public class Startup
 
     public void DependencyInyection(IServiceCollection services)
     {
+        services.AddSingleton<IFirebaseCredentialsProvider, FirebaseCredentialsProvider>();
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IPetServicesService, PetServicesService>();
         services.AddScoped<IUsersService,UsersService>();

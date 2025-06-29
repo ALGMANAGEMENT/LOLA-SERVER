@@ -16,10 +16,9 @@ namespace LOLA_SERVER.API.Services.PetServicesService
     {
         private readonly FirestoreDb _firestoreDb;
 
-        public PetServicesService()
+        public PetServicesService(IFirebaseCredentialsProvider credentialsProvider)
         {
-            string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
-            var credential = GoogleCredential.FromFile(credentialPath);
+            var credential = credentialsProvider.GetCredentials();
             var builder = new FirestoreClientBuilder
             {
                 Credential = credential

@@ -17,10 +17,9 @@ namespace LOLA_SERVER.API.Services
         private readonly string _bucketName = "lola-manager.appspot.com";
         private readonly FirestoreDb _firestoreDb;
 
-        public ImageService()
+        public ImageService(IFirebaseCredentialsProvider credentialsProvider)
         {
-            string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
-            var credential = GoogleCredential.FromFile(credentialPath);
+            var credential = credentialsProvider.GetCredentials();
             _storageClient = StorageClient.Create(credential);
             var builder = new FirestoreClientBuilder
             {

@@ -15,11 +15,10 @@ namespace LOLA_SERVER.API.Services.NotificationsService
         private readonly FirebaseCloudMessagingService _firebaseMessagingService;
         private readonly FirestoreDb _firestoreDb;
 
-        public NotificationsService()
+        public NotificationsService(IFirebaseCredentialsProvider credentialsProvider)
         {
             // Inicializar el cliente de Firebase Messaging
-            string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
-            var credential = GoogleCredential.FromFile(credentialPath);
+            var credential = credentialsProvider.GetCredentials();
             _firebaseMessagingService = new FirebaseCloudMessagingService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,

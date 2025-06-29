@@ -1,4 +1,13 @@
 # Archivos generados por el entorno de desarrollo
+
+# Credenciales de Firebase - NUNCA subir al repositorio
+**/Firebase-Credentials.json
+**/firebase-credentials.json
+Utils/Credentials/Firebase-Credentials.json
+LOLA-SERVER.API/Utils/Credentials/Firebase-Credentials.json
+*.firebase-credentials.json
+firebase-service-account.json
+
 .vscode/
 .idea/
 *.suo
@@ -24,7 +33,7 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
-# Archivos de publicación
+# Archivos de publicaciï¿½n
 publish/
 
 
@@ -35,7 +44,7 @@ temp/
 logs/
 
 
-# Archivos específicos de Firebase
+# Archivos especï¿½ficos de Firebase
 firebase-debug.log
 .firebaserc
 .firebase/
@@ -44,7 +53,7 @@ firebase-debug.log
 firebase.json
 storage.rules
 
-# Archivos de configuración del sistema operativo
+# Archivos de configuraciï¿½n del sistema operativo
 .DS_Store
 Thumbs.db
 /.vs/ProjectEvaluation

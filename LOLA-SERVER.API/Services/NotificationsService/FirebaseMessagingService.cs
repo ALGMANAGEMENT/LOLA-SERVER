@@ -5,6 +5,7 @@ using Google.Apis.FirebaseCloudMessaging.v1.Data;
 using Google.Apis.Services;
 using Google.Cloud.Firestore;
 using Google.Cloud.Firestore.V1;
+using LOLA_SERVER.API.Interfaces.Services;
 using LOLA_SERVER.API.Models.Notifications;
 using System;
 using System.Collections.Generic;
@@ -18,11 +19,10 @@ namespace LOLA_SERVER.API.Services.MessagingService
         private readonly FirebaseCloudMessagingService _firebaseMessagingService;
         private readonly FirestoreDb _firestoreDb;
 
-        public FirebaseMessagingService()
+        public FirebaseMessagingService(IFirebaseCredentialsProvider credentialsProvider)
         {
             // Inicializar el cliente de Firebase Messaging
-            string credentialPath = "Utils/Credentials/Firebase-Credentials.json";
-            var credential = GoogleCredential.FromFile(credentialPath);
+            var credential = credentialsProvider.GetCredentials();
             _firebaseMessagingService = new FirebaseCloudMessagingService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
