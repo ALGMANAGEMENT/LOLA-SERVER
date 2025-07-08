@@ -14,7 +14,7 @@ namespace LOLA_SERVER.API.Services
     public class ImageService : IImageService
     {
         private readonly StorageClient _storageClient;
-        private readonly string _bucketName = "lola-manager.appspot.com";
+        private readonly string _bucketName = "lola-manager.firebasestorage.app";
         private readonly FirestoreDb _firestoreDb;
 
         public ImageService(IFirebaseCredentialsProvider credentialsProvider)
